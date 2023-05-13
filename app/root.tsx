@@ -26,7 +26,7 @@ export default function App(): JSX.Element {
         <Links />
       </head>
       <body
-        className={`bg-slate-100 dark:bg-slate-950 text-slate-950 dark:text-slate-100 font-mono`}>
+        className={`flex flex-col min-h-screen selection:bg-primary-400 selection:text-secondary-950 tracking-wide bg-secondary-950 text-secondary-100 font-mono`}>
         <Outlet />
         <ScrollRestoration />
         <Scripts />
