@@ -12,9 +12,7 @@ model User {
   name      String
   password  String
   salt      String
-  verified  Boolean  @default(false)
   email     String   @unique
-  phone     String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   role      UserRole @default(USER)
