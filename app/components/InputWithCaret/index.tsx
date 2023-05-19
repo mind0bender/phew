@@ -2,9 +2,11 @@ import type {
   ChangeEvent,
   ChangeEventHandler,
   DetailedHTMLProps,
+  Dispatch,
   InputHTMLAttributes,
   MutableRefObject,
   ReactNode,
+  SetStateAction,
 } from "react";
 import { useState } from "react";
 
@@ -17,6 +19,8 @@ interface InputWithCaretProps
   > {
   propmtElement: ReactNode;
   visible?: boolean;
+  value: string;
+  setValue: Dispatch<SetStateAction<string>>;
 }
 
 interface Selection {
@@ -27,13 +31,14 @@ interface Selection {
 
 function InputWithCaret({
   propmtElement,
+  value,
+  setValue,
   visible = true,
   ...props
 }: InputWithCaretProps): JSX.Element {
   const inpRef: MutableRefObject<HTMLInputElement | null> =
     useRef<null | HTMLInputElement>(null);
 
-  const [value, setValue] = useState<string>("");
   const [selection, setSelection] = useState<Selection>({
     start: 0,
     end: 0,
@@ -44,7 +49,6 @@ function InputWithCaret({
     e: ChangeEvent<HTMLInputElement>
   ): void => {
     setValue(e.target.value);
-    console.log(e.target.value);
   };
 
   function updateCaret(): void {
@@ -67,11 +71,16 @@ function InputWithCaret({
         onKeyUp={updateCaret}
         {...props}
       />
-      <div className={`flex w-full`}>
+      <div className={`flex w-full flex-wrap break-all whitespace-pre-wrap`}>
         {propmtElement}
         {visible && (
-          <span className={`break-all whitespace-pre-wrap`}>
-            {value.slice(0, selection.start)}
+          <>
+            {value
+              .slice(0, selection.start)
+              .split("")
+              .map((char: string, idx: number): ReactNode => {
+                return <span key={idx}>{char}</span>;
+              })}
             {/* this is the "caret" */}
             <span
               className={`border blink ${
@@ -84,10 +93,13 @@ function InputWithCaret({
                 selection.isSelected ? selection.end : selection.start + 1
               ) || " "}
             </span>
-            {value.slice(
-              selection.isSelected ? selection.end : selection.start + 1
-            )}
-          </span>
+            {value
+              .slice(selection.isSelected ? selection.end : selection.start + 1)
+              .split("")
+              .map((char: string, idx: number): ReactNode => {
+                return <span key={idx}>{char}</span>;
+              })}
+          </>
         )}
       </div>
     </div>

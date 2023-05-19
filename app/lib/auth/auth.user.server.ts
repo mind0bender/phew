@@ -1,5 +1,5 @@
 import type { SafeParseReturnType } from "zod";
-import type { User, UserRole } from "@prisma/client";
+import type { User } from "@prisma/client";
 import type { FormStrategyVerifyParams } from "remix-auth-form";
 import type { UserLoginForm } from "./validation.auth.user.server";
 
@@ -9,6 +9,8 @@ import { FormStrategy } from "remix-auth-form";
 import { sessionStorage } from "./session.server";
 import { Authenticator, AuthorizationError } from "remix-auth";
 import { userLoginSchema } from "./validation.auth.user.server";
+import { ShareableUser } from "./shareable.user";
+import { DEFAULT_USER } from "../constants";
 
 export type UserSession = Pick<User, "user_id">;
 
@@ -60,7 +62,7 @@ interface GetAuthenticatedUserArgs {
 
 export async function getAuthenticatedUser({
   request,
-}: GetAuthenticatedUserArgs): Promise<ShareableUser | null> {
+}: GetAuthenticatedUserArgs): Promise<ShareableUser> {
   const userSession: UserSession | null =
     await userAuthenticator.isAuthenticated(request);
   if (userSession) {
@@ -72,27 +74,10 @@ export async function getAuthenticatedUser({
     if (user) {
       return new ShareableUser(user);
     } else {
-      return null;
+      return DEFAULT_USER;
     }
   } else {
-    return null;
-  }
-}
-
-export class ShareableUser {
-  public user_id: string;
-  public name: string;
-  public email: string;
-  public createdAt: Date;
-  public role: UserRole;
-  constructor(
-    user: Pick<User, "user_id" | "name" | "email" | "role" | "createdAt">
-  ) {
-    this.user_id = user.user_id;
-    this.name = user.name;
-    this.email = user.email;
-    this.createdAt = user.createdAt;
-    this.role = user.role;
+    return DEFAULT_USER;
   }
 }
 

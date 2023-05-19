@@ -1,6 +1,6 @@
 import type { LinkDescriptor, LinksFunction } from "@remix-run/node";
 
-import stylesheet from "~/tailwind.css";
+import twstylesheet from "~/tailwind.css";
 import { cssBundleHref } from "@remix-run/css-bundle";
 import {
   Links,
@@ -13,7 +13,7 @@ import {
 
 export const links: LinksFunction = (): LinkDescriptor[] => [
   ...(cssBundleHref ? [{ rel: "stylesheet", href: cssBundleHref }] : []),
-  { rel: "stylesheet", href: stylesheet },
+  { rel: "stylesheet", href: twstylesheet },
 ];
 
 export default function App(): JSX.Element {

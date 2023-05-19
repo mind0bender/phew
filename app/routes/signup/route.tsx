@@ -11,7 +11,8 @@ import { json } from "@remix-run/node";
 import Password from "~/utils/pswd.server";
 import { commitSession, getSession } from "~/lib/auth/session.server";
 import { userSignupSchema } from "~/lib/auth/validation.auth.user.server";
-import userAuthenticator, { ShareableUser } from "~/lib/auth/auth.user.server";
+import userAuthenticator from "~/lib/auth/auth.user.server";
+import { ShareableUser } from "~/lib/auth/shareable.user";
 
 export async function action({ request }: ActionArgs): Promise<
   TypedResponse<
