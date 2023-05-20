@@ -39,7 +39,6 @@ export default function Home(): JSX.Element {
       (e: KeyboardEvent<HTMLInputElement>): void => {
         if (e.key === "Enter") {
           const cmd: string = value;
-          setValue("");
           const commandActionData: CommandActionData = {
             cmd,
           };
@@ -74,7 +73,10 @@ export default function Home(): JSX.Element {
                     console.error(resData.errors);
                   }
                 })
-                .catch(console.error);
+                .catch(console.error)
+                .finally((): void => {
+                  setValue("");
+                });
             })
             .catch(console.error);
         }
