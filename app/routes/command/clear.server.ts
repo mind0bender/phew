@@ -1,10 +1,12 @@
-import type { CMDResponse } from "./route";
+import type { ResWithInit } from "./route";
 
-export default function CMDClearHandler(): CMDResponse {
-  return {
-    success: true,
-    data: {
-      clear: true,
+export default function CMDClearHandler(): ResWithInit {
+  return [
+    {
+      success: true,
+      data: {
+        clear: true,
+      },
     },
-  };
+  ];
 }

@@ -9,19 +9,15 @@ import type { UserSignupForm } from "~/lib/auth/validation.auth.user.server";
 import { db } from "~/utils/db.server";
 import { json } from "@remix-run/node";
 import Password from "~/utils/pswd.server";
+import type { CMDResponse } from "../command/route";
+import { ShareableUser } from "~/lib/auth/shareable.user";
+import userAuthenticator from "~/lib/auth/auth.user.server";
 import { commitSession, getSession } from "~/lib/auth/session.server";
 import { userSignupSchema } from "~/lib/auth/validation.auth.user.server";
-import userAuthenticator from "~/lib/auth/auth.user.server";
-import { ShareableUser } from "~/lib/auth/shareable.user";
 
-export async function action({ request }: ActionArgs): Promise<
-  TypedResponse<
-    | ActionReturnType<ActionError>
-    | ActionReturnType<{
-        user: ShareableUser;
-      }>
-  >
-> {
+export async function action({
+  request,
+}: ActionArgs): Promise<TypedResponse<CMDResponse>> {
   const authReq: Request = request.clone();
   const formData: FormData = await request.formData();
   const data: Record<string, FormDataEntryValue> = Object.fromEntries(formData);
@@ -61,15 +57,14 @@ export async function action({ request }: ActionArgs): Promise<
       const headers: Headers = new Headers({
         "Set-Cookie": await commitSession(session),
       });
-      return json<
-        ActionReturnType<{
-          user: ShareableUser;
-        }>
-      >(
+      return json<CMDResponse>(
         {
           success: true,
           data: {
-            user: new ShareableUser(user),
+            content: `Signedup as ${user.name} at ${Date.now()}`,
+            data: { user: new ShareableUser(user) },
+            fetchForm: true,
+            updateUser: true,
           },
         },
         {

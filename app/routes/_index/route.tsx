@@ -1,19 +1,20 @@
-import { useLoaderData } from "@remix-run/react";
+import type { CMDResponse } from "../command/route";
+import type { ReactNode, KeyboardEvent } from "react";
 import type { V2_MetaDescriptor } from "@remix-run/node";
-import { json } from "@remix-run/node";
+import type { ShareableUser } from "~/lib/auth/shareable.user";
 import type { LoaderArgs, V2_MetaFunction } from "@remix-run/node";
 
-import InputWithCaret from "~/components/InputWithCaret";
-import { useCallback, useState } from "react";
-import type { ReactNode, KeyboardEvent } from "react";
+import { useEffect } from "react";
+import { json } from "@remix-run/node";
 import Prompt from "~/components/prompt";
+import { useCallback, useState } from "react";
 import { DEFAULT_USER } from "~/lib/constants";
-import { getAuthenticatedUser } from "~/lib/auth/auth.user.server";
-import type { ShareableUser } from "~/lib/auth/shareable.user";
-import type { ActionReturnType } from "~/utils/actionhelper";
-import type { CommandActionData, ParseCMDReturnType } from "../command/route";
-import Output from "~/components/output";
 import clearHandler from "~/lib/commands/clear";
+import resErrorHandler from "~/lib/commands/error";
+import contentHandler from "~/lib/commands/content";
+import InputWithCaret from "~/components/InputWithCaret";
+import { useFetcher, useLoaderData } from "@remix-run/react";
+import { getAuthenticatedUser } from "~/lib/auth/auth.user.server";
 
 export const meta: V2_MetaFunction = ({
   data: { user },
@@ -31,57 +32,125 @@ export async function loader({ request }: LoaderArgs) {
 }
 
 export default function Home(): JSX.Element {
-  const [value, setValue] = useState<string>("");
-  const { user } = useLoaderData<typeof loader>();
+  const [cmd, setCmd] = useState<string>("");
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+
+  const userFetcher = useFetcher<{ user: ShareableUser }>();
+
+  useEffect((): void => {
+    if (userFetcher.state === "idle" && userFetcher.data == null) {
+      userFetcher.load("/login");
+    }
+  }, [userFetcher]);
+  const loaderUser: ShareableUser = useLoaderData<typeof loader>().user;
+
+  const user: ShareableUser = userFetcher.data?.user || loaderUser;
+
+  const fetchHandler: ({
+    url,
+    opts,
+  }: {
+    url?: string | undefined;
+    opts?: RequestInit | undefined;
+  }) => Promise<CMDResponse> = useCallback(
+    ({
+      url = "/command",
+      opts = {
+        method: "POST",
+        body: JSON.stringify({ cmd }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      },
+    }: {
+      url?: string;
+      opts?: RequestInit;
+    }): Promise<CMDResponse> => {
+      return new Promise(
+        (
+          resolve: (value: CMDResponse) => void,
+          reject: (reason?: any) => void
+        ): void => {
+          fetch(url, opts)
+            .then((res: Response): void => {
+              res
+                .json()
+                .then((resData: CMDResponse): void => {
+                  if (resData.success) {
+                    const { data } = resData;
+                    if (data.clear) {
+                      setOutput(clearHandler(data));
+                    } else if (data.content !== undefined) {
+                      setOutput(
+                        contentHandler({
+                          cmd,
+                          data,
+                          user,
+                          noPrompt: data.fetchForm === true,
+                        })
+                      );
+                    }
+                    if (data.fetchForm && data.fetchForm !== true) {
+                      setIsProcessing(true);
+                      fetchHandler({
+                        url: data.fetchForm,
+                        opts: {
+                          method: "POST",
+                          body: new URLSearchParams(data.data),
+                        },
+                      })
+                        .then(resolve)
+                        .catch(reject);
+                    } else {
+                      resolve(resData);
+                    }
+                  } else {
+                    const { errors } = resData;
+                    setIsProcessing(false);
+                    setOutput(
+                      resErrorHandler({
+                        cmd,
+                        errors,
+                        user,
+                        status: res.status,
+                      })
+                    );
+                    reject(errors);
+                  }
+                })
+                .catch(reject);
+            })
+            .catch(reject);
+        }
+      );
+    },
+    [cmd, user]
+  );
 
   const handleKeydown: (e: KeyboardEvent<HTMLInputElement>) => void =
     useCallback(
       (e: KeyboardEvent<HTMLInputElement>): void => {
         if (e.key === "Enter") {
-          const cmd: string = value;
-          const commandActionData: CommandActionData = {
-            cmd,
-          };
-          fetch("/command", {
-            method: "POST",
-            body: JSON.stringify(commandActionData),
-            headers: {
-              "Content-Type": "application/json",
-            },
-          })
-            .then((res: Response): void => {
-              res
-                .json()
-                .then((resData: ActionReturnType<ParseCMDReturnType>): void => {
-                  if (resData.success) {
-                    const { data } = resData;
-                    console.log(data);
-                    if (data.clear) {
-                      setOutput(clearHandler(data));
-                    } else if (data.content !== undefined) {
-                      setOutput((prevOutputs: ReactNode[]): ReactNode[] => [
-                        ...prevOutputs,
-                        <Output
-                          key={prevOutputs.length}
-                          name={user.name}
-                          cmd={cmd}>
-                          {data.content}
-                        </Output>,
-                      ]);
-                    }
-                  } else {
-                    console.error(resData.errors);
-                  }
-                })
-                .catch(console.error)
-                .finally((): void => {
-                  setValue("");
-                });
+          fetchHandler({})
+            .then((resData: CMDResponse): void => {
+              if (resData.success) {
+                if (resData.data.fetchForm === true) {
+                  setIsProcessing(false);
+                }
+                if (resData.success && resData.data.updateUser) {
+                  userFetcher.load("/login");
+                }
+              }
             })
-            .catch(console.error);
+            .catch((err): void => {
+              console.error(err);
+            })
+            .finally((): void => {
+              setCmd("");
+            });
         }
       },
-      [user.name, value]
+      [fetchHandler, userFetcher]
     );
 
   const [outputs, setOutput] = useState<ReactNode[]>([]);
@@ -92,19 +161,21 @@ export default function Home(): JSX.Element {
         {outputs.map((output: ReactNode, idx: number): ReactNode => {
           return output;
         })}
-        <InputWithCaret
-          value={value}
-          setValue={setValue}
-          type="text"
-          name="cmd"
-          id="cmd"
-          autoFocus
-          autoCapitalize={"none"}
-          autoComplete={"false"}
-          autoCorrect={"false"}
-          onKeyDown={handleKeydown}
-          propmtElement={<Prompt name={user.name} />}
-        />
+        {!isProcessing && (
+          <InputWithCaret
+            value={cmd}
+            setValue={setCmd}
+            type="text"
+            name="cmd"
+            id="cmd"
+            autoFocus
+            autoCapitalize={"none"}
+            autoComplete={"false"}
+            autoCorrect={"false"}
+            onKeyDown={handleKeydown}
+            propmtElement={<Prompt name={user.name} />}
+          />
+        )}
       </label>
     </div>
   );

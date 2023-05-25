@@ -5,15 +5,19 @@ import type { ActionReturnType } from "~/utils/actionhelper";
 
 import { z } from "zod";
 import { json } from "@remix-run/node";
-import parser from "~/lib/commands/index.server";
-import CMDClearHandler from "./clear.server";
-import CMDNotFoundHandler from "./notfound.server";
 import CMDHelpHandler from "./help.server";
+import CMDClearHandler from "./clear.server";
 import CMDWhoAmIHandler from "./whoami.server";
+import CMDSignupHandler from "./signup.server";
+import CMDLogoutHandler from "./logout.server";
+import parser from "~/lib/commands/index.server";
+import CMDNotFoundHandler from "./notfound.server";
 
 export type CMDResponse = ActionReturnType<ParseCMDReturnType>;
+export type ResWithInit = [CMDResponse, ResponseInit?];
 
 export async function action({ request }: ActionArgs) {
+  const reqForAuth: Request = request.clone();
   const data: any = await request.json();
   const parsedData: SafeParseReturnType<CommandActionData, CommandActionData> =
     commandActionDataSchema.safeParse(data);
@@ -32,13 +36,21 @@ export async function action({ request }: ActionArgs) {
 
     switch (args._[0]) {
       case "clear":
-        return json<CMDResponse>(CMDClearHandler());
+        return json<CMDResponse>(...CMDClearHandler());
       case "help":
-        return json<CMDResponse>(CMDHelpHandler());
+        return json<CMDResponse>(...CMDHelpHandler());
       case "whoami":
-        return json<CMDResponse>(await CMDWhoAmIHandler(request));
+        return json<CMDResponse>(...(await CMDWhoAmIHandler(request)));
+      case "signup":
+        return json<CMDResponse>(
+          ...(await CMDSignupHandler({ request: reqForAuth, cmd }))
+        );
+      case "logout":
+        return json<CMDResponse>(
+          ...(await CMDLogoutHandler({ request: reqForAuth }))
+        );
       default:
-        return json<CMDResponse>(CMDNotFoundHandler(args));
+        return json<CMDResponse>(...CMDNotFoundHandler(args));
     }
   } else {
     return json<ActionReturnType>({
@@ -54,7 +66,9 @@ export async function action({ request }: ActionArgs) {
 }
 
 const commandActionDataSchema = z.object({
-  cmd: z.string(),
+  cmd: z.string({
+    required_error: "command is required",
+  }),
 });
 
 export type CommandActionData = z.infer<typeof commandActionDataSchema>;
@@ -62,5 +76,6 @@ export interface ParseCMDReturnType {
   clear?: boolean;
   content?: string;
   data?: any;
-  promise?: Promise<string>;
+  fetchForm?: string | true;
+  updateUser?: boolean;
 }

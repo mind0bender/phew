@@ -1,7 +1,7 @@
 import { UserRole } from "@prisma/client";
 import { ShareableUser } from "./auth/shareable.user";
 
-export const DEFAULT_USER_NAME: string = "stem";
+const DEFAULT_USER_NAME: string = "stem";
 
 export const DEFAULT_USER: ShareableUser = new ShareableUser({
   name: DEFAULT_USER_NAME,
