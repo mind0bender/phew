@@ -3,14 +3,14 @@ import type { Arguments } from "yargs-parser";
 import type { ActionError } from "~/utils/actionhelper";
 import type { SafeParseReturnType, ZodIssue } from "zod";
 import type { ShareableUser } from "~/lib/auth/shareable.user";
-import type { UserSignupForm } from "~/lib/auth/validation.auth.user.server";
+import type { UserLoginForm } from "~/lib/auth/validation.auth.user.server";
 
 import { UserRole } from "@prisma/client";
 import parser from "~/lib/commands/index.server";
 import { getAuthenticatedUser } from "~/lib/auth/auth.user.server";
-import { userSignupSchema } from "~/lib/auth/validation.auth.user.server";
+import { userLoginSchema } from "~/lib/auth/validation.auth.user.server";
 
-export default async function CMDSignupHandler({
+export default async function CMDLoginHandler({
   request,
   cmd,
 }: {
@@ -33,26 +33,15 @@ logout to continue`,
     ];
   }
 
-  const signupData: UserSignupForm = signupDataParser(cmd);
-  const parsedSignupData: SafeParseReturnType<UserSignupForm, UserSignupForm> =
-    userSignupSchema.safeParse(signupData);
-  if (parsedSignupData.success) {
-    return [
-      {
-        success: true,
-        data: {
-          data: signupData,
-          fetchForm: "/signup",
-          content: `signing up`,
-        },
-      },
-    ];
-  } else {
+  const loginData: UserLoginForm = loginDataParser(cmd);
+  const parsedLoginData: SafeParseReturnType<UserLoginForm, UserLoginForm> =
+    userLoginSchema.safeParse(loginData);
+  if (!parsedLoginData.success) {
     return [
       {
         success: false,
         errors: [
-          ...parsedSignupData.error.errors.map((err: ZodIssue): ActionError => {
+          ...parsedLoginData.error.errors.map((err: ZodIssue): ActionError => {
             return {
               message: err.message,
               code: 400,
@@ -65,28 +54,35 @@ logout to continue`,
       },
     ];
   }
+  return [
+    {
+      success: true,
+      data: {
+        data: loginData,
+        fetchForm: "/login",
+        content: `logging in`,
+      },
+    },
+  ];
 }
 
-function signupDataParser(cmd: string): UserSignupForm {
-  const signupArgs: Arguments = parser(cmd, {
-    string: ["name", "email", "password"],
+function loginDataParser(cmd: string): UserLoginForm {
+  const loginArgs: Arguments = parser(cmd, {
+    string: ["email", "password"],
     alias: {
-      name: ["n", "username"],
       email: ["e"],
       password: ["p", "pswd"],
     },
     default: {
-      name: "",
       email: "",
       password: "",
     },
   });
 
-  const signupData: UserSignupForm = {
-    name: signupArgs.name || signupArgs._?.[1],
-    email: signupArgs.email || signupArgs._?.[2],
-    password: signupArgs.password || signupArgs._?.[3],
+  const loginData: UserLoginForm = {
+    email: loginArgs.email || loginArgs._?.[1],
+    password: loginArgs.password || loginArgs._?.[2],
   };
 
-  return signupData;
+  return loginData;
 }

@@ -6,6 +6,7 @@ import type { ActionReturnType } from "~/utils/actionhelper";
 import { z } from "zod";
 import { json } from "@remix-run/node";
 import CMDHelpHandler from "./help.server";
+import CMDLoginHandler from "./login.server";
 import CMDClearHandler from "./clear.server";
 import CMDWhoAmIHandler from "./whoami.server";
 import CMDSignupHandler from "./signup.server";
@@ -44,6 +45,10 @@ export async function action({ request }: ActionArgs) {
       case "signup":
         return json<CMDResponse>(
           ...(await CMDSignupHandler({ request: reqForAuth, cmd }))
+        );
+      case "login":
+        return json<CMDResponse>(
+          ...(await CMDLoginHandler({ request: reqForAuth, cmd }))
         );
       case "logout":
         return json<CMDResponse>(

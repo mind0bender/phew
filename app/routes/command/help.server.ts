@@ -14,7 +14,9 @@ A star (*) next to the name means that the command is only available for registe
 help                            []
 clear                           []
 whoami                          []
-signup                          name email password`,
+login                           email password
+signup                          name email password
+logout                          []`,
       },
     },
   ];
