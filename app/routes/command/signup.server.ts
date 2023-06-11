@@ -71,9 +71,9 @@ function signupDataParser(cmd: string): UserSignupForm {
   const signupArgs: Arguments = parser(cmd, {
     string: ["name", "email", "password"],
     alias: {
-      name: ["n", "username"],
-      email: ["e"],
+      name: ["n", "user", "u"],
       password: ["p", "pswd"],
+      email: ["e"],
     },
     default: {
       name: "",

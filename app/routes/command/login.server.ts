@@ -68,19 +68,19 @@ logout to continue`,
 
 function loginDataParser(cmd: string): UserLoginForm {
   const loginArgs: Arguments = parser(cmd, {
-    string: ["email", "password"],
+    string: ["name", "password"],
     alias: {
-      email: ["e"],
+      name: ["n", "user", "u"],
       password: ["p", "pswd"],
     },
     default: {
-      email: "",
+      name: "",
       password: "",
     },
   });
 
   const loginData: UserLoginForm = {
-    email: loginArgs.email || loginArgs._?.[1],
+    name: loginArgs.name || loginArgs._?.[1],
     password: loginArgs.password || loginArgs._?.[2],
   };
 

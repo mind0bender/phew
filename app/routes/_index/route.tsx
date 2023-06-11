@@ -15,6 +15,7 @@ import contentHandler from "~/lib/commands/content";
 import InputWithCaret from "~/components/InputWithCaret";
 import { useFetcher, useLoaderData } from "@remix-run/react";
 import { getAuthenticatedUser } from "~/lib/auth/auth.user.server";
+import Processing from "~/components/processing";
 
 export const meta: V2_MetaFunction = ({
   data: { user },
@@ -89,6 +90,7 @@ export default function Home(): JSX.Element {
                           noPrompt: data.fetchForm === true,
                         })
                       );
+                      console.log(data.fetchForm);
                     }
                     if (data.fetchForm && data.fetchForm !== true) {
                       setIsProcessing(true);
@@ -105,16 +107,18 @@ export default function Home(): JSX.Element {
                       resolve(resData);
                     }
                   } else {
-                    const { errors } = resData;
-                    setIsProcessing(false);
+                    const { errors, data } = resData;
                     setOutput(
                       resErrorHandler({
                         cmd,
                         errors,
                         user,
                         status: res.status,
+                        noPrompt: data && data.fetchForm === true,
                       })
                     );
+                    console.log(isProcessing);
+                    setIsProcessing(false);
                     reject(errors);
                   }
                 })
@@ -124,7 +128,7 @@ export default function Home(): JSX.Element {
         }
       );
     },
-    [cmd, user]
+    [cmd, isProcessing, user]
   );
 
   const handleKeydown: (e: KeyboardEvent<HTMLInputElement>) => void =
@@ -161,7 +165,7 @@ export default function Home(): JSX.Element {
         {outputs.map((output: ReactNode, idx: number): ReactNode => {
           return output;
         })}
-        {!isProcessing && (
+        {!isProcessing ? (
           <InputWithCaret
             value={cmd}
             setValue={setCmd}
@@ -175,6 +179,8 @@ export default function Home(): JSX.Element {
             onKeyDown={handleKeydown}
             propmtElement={<Prompt name={user.name} />}
           />
+        ) : (
+          <Processing />
         )}
       </label>
     </div>

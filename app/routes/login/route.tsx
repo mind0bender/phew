@@ -36,6 +36,9 @@ export async function action({
     return json<ActionReturnType>(
       {
         success: false,
+        data: {
+          fetchForm: true,
+        },
         errors: [
           ...parsed.error.errors.map((err: ZodIssue): ActionError => {
             return {
@@ -48,11 +51,11 @@ export async function action({
       400
     );
   }
-  const { email, password } = parsed.data;
-  console.log({ password, email });
+  const { name, password } = parsed.data;
+  console.log({ password, name });
   const user: User | null = await db.user.findUnique({
     where: {
-      email,
+      name,
     },
   });
 
@@ -60,6 +63,9 @@ export async function action({
     return json<ActionReturnType>(
       {
         success: false,
+        data: {
+          fetchForm: true,
+        },
         errors: [
           {
             message: "User not found",
@@ -76,6 +82,9 @@ export async function action({
     return json<ActionReturnType>(
       {
         success: false,
+        data: {
+          fetchForm: true,
+        },
         errors: [
           {
             message: `Authentication Error: User identification failed

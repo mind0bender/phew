@@ -4,19 +4,14 @@ export function lineOfLength(line: number, symbol: string = "-"): string {
   return Array(line + 1).join(symbol);
 }
 
-export function onlyForRegisteredUsers(
-  data?: Partial<ParseCMDReturnType>
-): ParseCMDReturnType {
-  return {
-    content: `This feature is only available for registered users.
-Please sign up to access this command`,
-    ...data,
-  };
-}
+export const loginRequiredMsg: string = `Unauthorized user identification.
+Feature access restricted.
+login required!`;
 
-export function ERR500(data?: Partial<CMDResponse>): CMDResponse {
+export function ERR500(data?: Partial<ParseCMDReturnType>): CMDResponse {
   return {
     success: false,
+    data,
     errors: [
       {
         code: 500,

@@ -7,6 +7,7 @@ import { commitSession, getSession } from "~/lib/auth/session.server";
 import userAuthenticator, {
   getAuthenticatedUser,
 } from "~/lib/auth/auth.user.server";
+import { loginRequiredMsg } from "~/lib/misc";
 
 export default async function CMDLogoutHandler({
   request,
@@ -20,10 +21,11 @@ export default async function CMDLogoutHandler({
   if (user.role === UserRole.STEM) {
     return [
       {
-        success: true,
-        data: {
-          content: `You are already logged out.`,
-        },
+        success: false,
+        errors: [{ message: loginRequiredMsg, code: 401 }],
+      },
+      {
+        status: 401,
       },
     ];
   }

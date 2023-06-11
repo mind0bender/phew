@@ -23,10 +23,10 @@ const userAuthFormStrategy = new FormStrategy(async function ({
   const parsedData: SafeParseReturnType<UserLoginForm, UserLoginForm> =
     userLoginSchema.safeParse(data);
   if (parsedData.success) {
-    const { email, password } = parsedData.data;
+    const { name, password } = parsedData.data;
     const user: Omit<User, "updatedAt"> | null = await db.user.findUnique({
       where: {
-        email,
+        name,
       },
       select: {
         name: true,

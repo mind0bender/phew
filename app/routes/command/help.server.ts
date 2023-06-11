@@ -9,14 +9,14 @@ export default function CMDHelpHandler(): ResWithInit {
         content: `PHEW
 These commands are available.
 
-A star (*) next to the name means that the command is only available for registered users.
+A star (*) next to the name means that the command is only available for authenticated users.
 
 help                            []
 clear                           []
 whoami                          []
-login                           email password
-signup                          name email password
-logout                          []`,
+login                           username[u] password[p]
+signup                          username[u] email[e] password[p]
+logout*                         []`,
       },
     },
   ];

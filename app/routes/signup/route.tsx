@@ -25,14 +25,14 @@ export async function action({
     userSignupSchema.safeParse(data);
   if (parsed.success) {
     const { name, email, password } = parsed.data;
-    console.log({ password });
+    console.log({ password, name });
     const exists: boolean = Boolean(
       await db.user.findFirst({
         where: {
-          email,
+          OR: [{ email }, { name }],
         },
         select: {
-          email: true,
+          name: true,
         },
       })
     );
@@ -76,6 +76,9 @@ export async function action({
       return json<ActionReturnType>(
         {
           success: false,
+          data: {
+            fetchForm: true,
+          },
           errors: [
             {
               message: "User already exists",
@@ -90,6 +93,9 @@ export async function action({
     return json<ActionReturnType>(
       {
         success: false,
+        data: {
+          fetchForm: true,
+        },
         errors: [
           ...parsed.error.errors.map((err: ZodIssue): ActionError => {
             return {
