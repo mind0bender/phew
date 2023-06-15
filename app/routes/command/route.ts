@@ -63,7 +63,7 @@ export async function action({ request }: ActionArgs) {
       errors: [
         {
           code: 400,
-          message: "Invalid inpput",
+          message: "Invalid input",
         },
       ],
     });

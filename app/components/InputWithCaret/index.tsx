@@ -2,15 +2,11 @@ import type {
   ChangeEvent,
   ChangeEventHandler,
   DetailedHTMLProps,
-  Dispatch,
   InputHTMLAttributes,
   MutableRefObject,
   ReactNode,
-  SetStateAction,
 } from "react";
-import { useState } from "react";
-
-import { useRef } from "react";
+import { useRef, useState } from "react";
 
 interface InputWithCaretProps
   extends DetailedHTMLProps<
@@ -20,7 +16,7 @@ interface InputWithCaretProps
   propmtElement: ReactNode;
   visible?: boolean;
   value: string;
-  setValue: Dispatch<SetStateAction<string>>;
+  setValue: (value: string) => void;
 }
 
 interface Selection {

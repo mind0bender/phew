@@ -10,12 +10,12 @@ import Prompt from "~/components/prompt";
 import { useCallback, useState } from "react";
 import { DEFAULT_USER } from "~/lib/constants";
 import clearHandler from "~/lib/commands/clear";
+import Processing from "~/components/processing";
 import resErrorHandler from "~/lib/commands/error";
 import contentHandler from "~/lib/commands/content";
 import InputWithCaret from "~/components/InputWithCaret";
 import { useFetcher, useLoaderData } from "@remix-run/react";
 import { getAuthenticatedUser } from "~/lib/auth/auth.user.server";
-import Processing from "~/components/processing";
 
 export const meta: V2_MetaFunction = ({
   data: { user },
@@ -32,8 +32,15 @@ export async function loader({ request }: LoaderArgs) {
   return json({ user });
 }
 
+interface CMD {
+  id: number;
+  cmd: string;
+}
+
 export default function Home(): JSX.Element {
-  const [cmd, setCmd] = useState<string>("");
+  const [CMDsHistory, setCMDsHistory] = useState<CMD[]>([]);
+
+  const [cmd, setCmd] = useState<CMD>({ id: 0, cmd: "" });
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
 
   const userFetcher = useFetcher<{ user: ShareableUser }>();
@@ -58,7 +65,7 @@ export default function Home(): JSX.Element {
       url = "/command",
       opts = {
         method: "POST",
-        body: JSON.stringify({ cmd }),
+        body: JSON.stringify({ cmd: cmd.cmd }),
         headers: {
           "Content-Type": "application/json",
         },
@@ -84,13 +91,12 @@ export default function Home(): JSX.Element {
                     } else if (data.content !== undefined) {
                       setOutput(
                         contentHandler({
-                          cmd,
+                          cmd: cmd.cmd,
                           data,
                           user,
                           noPrompt: data.fetchForm === true,
                         })
                       );
-                      console.log(data.fetchForm);
                     }
                     if (data.fetchForm && data.fetchForm !== true) {
                       setIsProcessing(true);
@@ -110,14 +116,13 @@ export default function Home(): JSX.Element {
                     const { errors, data } = resData;
                     setOutput(
                       resErrorHandler({
-                        cmd,
+                        cmd: cmd.cmd,
                         errors,
                         user,
                         status: res.status,
                         noPrompt: data && data.fetchForm === true,
                       })
                     );
-                    console.log(isProcessing);
                     setIsProcessing(false);
                     reject(errors);
                   }
@@ -128,33 +133,82 @@ export default function Home(): JSX.Element {
         }
       );
     },
-    [cmd, isProcessing, user]
+    [cmd, user]
   );
+
+  const handleCMDHistoryNavigation: (key: string) => void = useCallback(
+    (key: string): void => {
+      setCmd((pCMD: CMD): CMD => {
+        switch (key) {
+          case "ArrowUp":
+            return CMDsHistory[pCMD.id - 1] || pCMD;
+          case "ArrowDown":
+            return CMDsHistory[pCMD.id + 1] || pCMD;
+          default:
+            return pCMD;
+        }
+      });
+    },
+    [CMDsHistory]
+  );
+
+  const pushCMDInHistory: () => void = useCallback((): void => {
+    setCmd((pCMD: CMD): CMD => {
+      if (
+        !CMDsHistory.length ||
+        CMDsHistory[CMDsHistory.length - 1].cmd !== pCMD.cmd
+      ) {
+        setCMDsHistory((pCMDsH: CMD[]): CMD[] => {
+          return [...pCMDsH, pCMD];
+        });
+        return {
+          id: pCMD.id + 1,
+          cmd: "",
+        };
+      }
+      return {
+        id: pCMD.id,
+        cmd: "",
+      };
+    });
+  }, [CMDsHistory]);
 
   const handleKeydown: (e: KeyboardEvent<HTMLInputElement>) => void =
     useCallback(
       (e: KeyboardEvent<HTMLInputElement>): void => {
-        if (e.key === "Enter") {
-          fetchHandler({})
-            .then((resData: CMDResponse): void => {
-              if (resData.success) {
-                if (resData.data.fetchForm === true) {
-                  setIsProcessing(false);
+        switch (e.key) {
+          case "Enter":
+            fetchHandler({})
+              .then((resData: CMDResponse): void => {
+                if (resData.success) {
+                  if (resData.data.fetchForm === true) {
+                    setIsProcessing(false);
+                  }
+                  if (resData.success && resData.data.updateUser) {
+                    userFetcher.load("/login");
+                  }
                 }
-                if (resData.success && resData.data.updateUser) {
-                  userFetcher.load("/login");
-                }
-              }
-            })
-            .catch((err): void => {
-              console.error(err);
-            })
-            .finally((): void => {
-              setCmd("");
-            });
+              })
+              .catch((err: unknown): void => {
+                console.error(err);
+              })
+              .finally((): void => {
+                pushCMDInHistory();
+              });
+            break;
+          case "ArrowUp":
+            e.preventDefault();
+            handleCMDHistoryNavigation(e.key);
+            break;
+          case "ArrowDown":
+            e.preventDefault();
+            handleCMDHistoryNavigation(e.key);
+            break;
+          default:
+            break;
         }
       },
-      [fetchHandler, userFetcher]
+      [fetchHandler, handleCMDHistoryNavigation, userFetcher, pushCMDInHistory]
     );
 
   const [outputs, setOutput] = useState<ReactNode[]>([]);
@@ -167,8 +221,13 @@ export default function Home(): JSX.Element {
         })}
         {!isProcessing ? (
           <InputWithCaret
-            value={cmd}
-            setValue={setCmd}
+            value={cmd.cmd}
+            setValue={(value: string): void => {
+              setCmd({
+                id: (CMDsHistory[CMDsHistory.length - 1] || { id: -1 }).id + 1,
+                cmd: value,
+              });
+            }}
             type="text"
             name="cmd"
             id="cmd"
@@ -185,4 +244,11 @@ export default function Home(): JSX.Element {
       </label>
     </div>
   );
+}
+
+export function ErrorBoundary(): JSX.Element {
+  return <div>Error</div>;
+}
+export function CatchBoundary(): JSX.Element {
+  return <div>catch</div>;
 }
