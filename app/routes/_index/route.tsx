@@ -56,6 +56,8 @@ export default function Home(): JSX.Element {
 
   const user: ShareableUser = userFetcher.data?.user || loaderUser;
 
+  const [pwd, setPwd] = useState<string>("/");
+
   const fetchHandler: ({
     url,
     opts,
@@ -67,7 +69,7 @@ export default function Home(): JSX.Element {
       url = "/command",
       opts = {
         method: "POST",
-        body: JSON.stringify({ cmd: cmd.cmd }),
+        body: JSON.stringify({ cmd: cmd.cmd, pwd: pwd }),
         headers: {
           "Content-Type": "application/json",
         },

@@ -13,6 +13,7 @@ import CMDSignupHandler from "./signup.server";
 import CMDLogoutHandler from "./logout.server";
 import parser from "~/lib/commands/index.server";
 import CMDNotFoundHandler from "./notfound.server";
+import CMDLsHandler from "./ls.server";
 
 export type CMDResponse = ActionReturnType<ParseCMDReturnType>;
 export type ResWithInit = [CMDResponse, ResponseInit?];
@@ -23,7 +24,7 @@ export async function action({ request }: ActionArgs) {
   const parsedData: SafeParseReturnType<CommandActionData, CommandActionData> =
     commandActionDataSchema.safeParse(data);
   if (parsedData.success) {
-    const { cmd } = parsedData.data;
+    const { cmd, pwd } = parsedData.data;
     const args: Arguments = parser(cmd);
 
     if (!args._.length) {
@@ -54,6 +55,10 @@ export async function action({ request }: ActionArgs) {
         return json<CMDResponse>(
           ...(await CMDLogoutHandler({ request: reqForAuth }))
         );
+      case "ls":
+        return json<CMDResponse>(
+          ...(await CMDLsHandler({ request: reqForAuth, pwd: pwd }))
+        );
       default:
         return json<CMDResponse>(...CMDNotFoundHandler(args));
     }
@@ -73,6 +78,9 @@ export async function action({ request }: ActionArgs) {
 const commandActionDataSchema = z.object({
   cmd: z.string({
     required_error: "command is required",
+  }),
+  pwd: z.string({
+    required_error: "pwd is required",
   }),
 });
 

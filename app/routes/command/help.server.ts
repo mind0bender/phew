@@ -16,7 +16,8 @@ clear                           []
 whoami                          []
 login                           username[u] password[p]
 signup                          username[u] email[e] password[p]
-logout*                         []`,
+logout*                         []
+ls*                             dirname`,
       },
     },
   ];

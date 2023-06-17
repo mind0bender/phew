@@ -1,7 +1,4 @@
 {
-    "UPDATE": [
-        "favicon",
-        "creates root folder on signup"
-    ],
-    "MISC": true
+    "UPDATE": [],
+    "MISC": false
 }
