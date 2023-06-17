@@ -11,9 +11,10 @@ import { db } from "~/utils/db.server";
 import { json } from "@remix-run/node";
 import Password from "~/utils/pswd.server";
 import { DEFAULT_USER } from "~/lib/constants";
-import { ShareableUser } from "~/lib/auth/shareable.user";
 import { commitSession, getSession } from "~/lib/auth/session.server";
 import { userLoginSchema } from "~/lib/auth/validation.auth.user.server";
+import type { ShareableUserSelectedType } from "~/lib/auth/shareable.user";
+import { ShareableUser, ShareableUserSelect } from "~/lib/auth/shareable.user";
 import userAuthenticator, {
   getAuthenticatedUser,
 } from "~/lib/auth/auth.user.server";
@@ -53,10 +54,13 @@ export async function action({
   }
   const { name, password } = parsed.data;
   console.log({ password, name });
-  const user: User | null = await db.user.findUnique({
+  const user:
+    | (ShareableUserSelectedType & Pick<User, "password" | "salt">)
+    | null = await db.user.findUnique({
     where: {
       name,
     },
+    select: { ...ShareableUserSelect, password: true, salt: true },
   });
 
   if (!user) {

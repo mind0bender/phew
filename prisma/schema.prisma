@@ -23,14 +23,15 @@ model User {
 }
 
 enum UserRole {
+  STEM
   USER
   ROOT
-  STEM
 }
 
 model Phew {
-  phew_id          String   @id @default(uuid()) @map("_id") @db.ObjectId
+  phew_id          String   @id @default(auto()) @map("_id") @db.ObjectId
   name             String
+  readonly         Boolean  @default(false)
   content          String
   password         String
   salt             String
@@ -45,8 +46,9 @@ model Phew {
 }
 
 model Folder {
-  folder_id        String   @id @default(uuid()) @map("_id") @db.ObjectId
+  folder_id        String   @id @default(auto()) @map("_id") @db.ObjectId
   name             String
+  readonly         Boolean  @default(false)
   // relational
   user_id          String   @db.ObjectId
   user             User     @relation(fields: [user_id], references: [user_id])

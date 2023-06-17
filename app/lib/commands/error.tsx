@@ -31,7 +31,7 @@ export default function resErrorHandler({
         return (
           <div
             className={`text-red-300`}
-            key={idx}>{`${err.code}: ${err.message}`}</div>
+            key={idx}>{`[${err.code}] ${err.message}`}</div>
         );
       })}
     </Output>,

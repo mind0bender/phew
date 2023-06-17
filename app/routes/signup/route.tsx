@@ -1,4 +1,4 @@
-import type { User } from "@prisma/client";
+import type { Folder, User } from "@prisma/client";
 import type { SafeParseReturnType, ZodIssue } from "zod";
 import type { HashedPassword } from "~/utils/pswd.server";
 import type { UserSession } from "~/lib/auth/auth.user.server";
@@ -31,22 +31,40 @@ export async function action({
         where: {
           OR: [{ email }, { name }],
         },
-        select: {
-          name: true,
-        },
+        select: {},
       })
     );
     if (!exists) {
       const pswd: Password = new Password(password);
       const { hash, salt }: HashedPassword = await pswd.hash();
-      const user: User = await db.user.create({
+      const user: Pick<
+        User,
+        "name" | "email" | "user_id" | "role" | "createdAt"
+      > = await db.user.create({
         data: {
           name,
           email,
           password: hash,
           salt,
         },
+        select: {
+          name: true,
+          user_id: true,
+          email: true,
+          role: true,
+          createdAt: true,
+        },
       });
+
+      // create root folder for the user
+      await db.folder.create({
+        data: {
+          name: "/",
+          user_id: user.user_id,
+        },
+        select: {},
+      });
+
       const userSession: UserSession = await userAuthenticator.authenticate(
         "form",
         authReq
@@ -61,7 +79,7 @@ export async function action({
         {
           success: true,
           data: {
-            content: `Signedup as ${user.name} at ${Date.now()}`,
+            content: `signedup as ${user.name} at ${Date.now()}`,
             data: { user: new ShareableUser(user) },
             fetchForm: true,
             updateUser: true,
@@ -81,7 +99,7 @@ export async function action({
           },
           errors: [
             {
-              message: "User already exists",
+              message: `username: ${name} has been secured by another user`,
               code: 309,
             },
           ],

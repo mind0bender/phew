@@ -1,3 +1,5 @@
+// / <reference types="w3c-web-usb" />
+// / <reference types="w3c-web-serial" />
 import type { CMDResponse } from "../command/route";
 import type { ReactNode, KeyboardEvent } from "react";
 import type { V2_MetaDescriptor } from "@remix-run/node";
@@ -214,7 +216,7 @@ export default function Home(): JSX.Element {
   const [outputs, setOutput] = useState<ReactNode[]>([]);
 
   return (
-    <div className={`flex grow px-2 py-1 md:px-4 md:py-3 w-full`}>
+    <div className={`flex flex-col grow px-2 py-1 md:px-4 md:py-3 w-full`}>
       <label className={`flex flex-col grow w-full`} htmlFor={`cmd`}>
         {outputs.map((output: ReactNode, idx: number): ReactNode => {
           return output;

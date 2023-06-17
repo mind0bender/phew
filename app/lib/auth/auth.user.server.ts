@@ -24,20 +24,18 @@ const userAuthFormStrategy = new FormStrategy(async function ({
     userLoginSchema.safeParse(data);
   if (parsedData.success) {
     const { name, password } = parsedData.data;
-    const user: Omit<User, "updatedAt"> | null = await db.user.findUnique({
-      where: {
-        name,
-      },
-      select: {
-        name: true,
-        role: true,
-        salt: true,
-        email: true,
-        user_id: true,
-        password: true,
-        createdAt: true,
-      },
-    });
+    const user: Pick<User, "role" | "salt" | "password" | "user_id"> | null =
+      await db.user.findUnique({
+        where: {
+          name,
+        },
+        select: {
+          role: true,
+          salt: true,
+          user_id: true,
+          password: true,
+        },
+      });
     if (user) {
       const pswd: Password = new Password(password, user.salt);
       const isCorrectPSWD: boolean = await pswd.compare(user.password);
@@ -66,12 +64,23 @@ export async function getAuthenticatedUser({
   const userSession: UserSession | null =
     await userAuthenticator.isAuthenticated(request);
   if (userSession) {
-    const user: User | null = await db.user.findUnique({
+    const user: Pick<
+      User,
+      "user_id" | "name" | "email" | "role" | "createdAt"
+    > | null = await db.user.findUnique({
       where: {
         user_id: userSession.user_id,
       },
+      select: {
+        name: true,
+        email: true,
+        role: true,
+        user_id: true,
+        createdAt: true,
+      },
     });
     if (user) {
+      console.log(user);
       return new ShareableUser(user);
     } else {
       return DEFAULT_USER;

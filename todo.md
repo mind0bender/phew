@@ -1,3 +1,6 @@
 ```sh
-help <cmd>
++ help <cmd>
++ sudo <cmd>
++ mkdir <dirname>
++ ls <dirname>
 ```
