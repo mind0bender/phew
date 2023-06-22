@@ -137,7 +137,7 @@ export default function Home(): JSX.Element {
         }
       );
     },
-    [cmd, user]
+    [cmd.cmd, pwd, user]
   );
 
   const handleCMDHistoryNavigation: (key: string) => void = useCallback(

@@ -1,16 +1,16 @@
-import type { SafeParseReturnType } from "zod";
 import type { User } from "@prisma/client";
+import type { SafeParseReturnType } from "zod";
 import type { FormStrategyVerifyParams } from "remix-auth-form";
 import type { UserLoginForm } from "./validation.auth.user.server";
 
 import { db } from "~/utils/db.server";
 import Password from "~/utils/pswd.server";
+import { DEFAULT_USER } from "../constants";
 import { FormStrategy } from "remix-auth-form";
+import { ShareableUser } from "./shareable.user";
 import { sessionStorage } from "./session.server";
 import { Authenticator, AuthorizationError } from "remix-auth";
 import { userLoginSchema } from "./validation.auth.user.server";
-import { ShareableUser } from "./shareable.user";
-import { DEFAULT_USER } from "../constants";
 
 export type UserSession = Pick<User, "user_id">;
 
@@ -80,7 +80,6 @@ export async function getAuthenticatedUser({
       },
     });
     if (user) {
-      console.log(user);
       return new ShareableUser(user);
     } else {
       return DEFAULT_USER;

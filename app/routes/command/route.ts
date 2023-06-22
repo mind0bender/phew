@@ -5,6 +5,7 @@ import type { ActionReturnType } from "~/utils/actionhelper";
 
 import { z } from "zod";
 import { json } from "@remix-run/node";
+import CMDLsHandler from "./ls.server";
 import CMDHelpHandler from "./help.server";
 import CMDLoginHandler from "./login.server";
 import CMDClearHandler from "./clear.server";
@@ -13,7 +14,6 @@ import CMDSignupHandler from "./signup.server";
 import CMDLogoutHandler from "./logout.server";
 import parser from "~/lib/commands/index.server";
 import CMDNotFoundHandler from "./notfound.server";
-import CMDLsHandler from "./ls.server";
 
 export type CMDResponse = ActionReturnType<ParseCMDReturnType>;
 export type ResWithInit = [CMDResponse, ResponseInit?];
@@ -57,7 +57,7 @@ export async function action({ request }: ActionArgs) {
         );
       case "ls":
         return json<CMDResponse>(
-          ...(await CMDLsHandler({ request: reqForAuth, pwd: pwd }))
+          ...(await CMDLsHandler({ request: reqForAuth, pwd: pwd, cmd }))
         );
       default:
         return json<CMDResponse>(...CMDNotFoundHandler(args));

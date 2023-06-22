@@ -58,20 +58,23 @@ export async function action({
         },
       });
 
-      // create root folder for the user
-      const rootFolder: Pick<Folder, "folder_id"> = await db.folder.create({
-        data: {
-          name: "/",
-          user_id: user.user_id,
-        },
-        select: {
-          folder_id: true,
-        },
-      });
+      // create root directory for the user
+      const rootFolder: Pick<Folder, "folder_id" | "name"> =
+        await db.folder.create({
+          data: {
+            name: "/",
+            user_id: user.user_id,
+          },
+          select: {
+            folder_id: true,
+            name: true,
+          },
+        });
 
-      const source: Pick<Folder, "folder_id"> = await db.folder.create({
+      // create /source directory for the user
+      await db.folder.create({
         data: {
-          name: "source",
+          name: `${rootFolder.name}source`,
           user_id: user.user_id,
           parent_folder_id: rootFolder.folder_id,
         },
@@ -79,7 +82,6 @@ export async function action({
           folder_id: true,
         },
       });
-      console.log(source);
 
       const userSession: UserSession = await userAuthenticator.authenticate(
         "form",
