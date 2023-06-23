@@ -8,11 +8,13 @@ export default function contentHandler({
   user,
   data,
   cmd,
+  pwd,
   noPrompt,
 }: {
   user: ShareableUser;
   data: ParseCMDReturnType;
   cmd: string;
+  pwd: string;
   noPrompt?: boolean;
 }): SetStateAction<ReactNode[]> {
   return (prevOutputs: ReactNode[]): ReactNode[] => [
@@ -21,7 +23,8 @@ export default function contentHandler({
       key={prevOutputs.length}
       noPrompt={noPrompt}
       name={user.name}
-      cmd={cmd}>
+      cmd={cmd}
+      pwd={pwd}>
       {data.content}
     </Output>,
   ];

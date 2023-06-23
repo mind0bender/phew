@@ -5,11 +5,11 @@ import type { SafeParseReturnType } from "zod";
 import type { ShareableUser } from "~/lib/auth/shareable.user";
 
 import { z } from "zod";
-import { join } from "path";
 import { db } from "~/utils/db.server";
+import { join, isAbsolute } from "path";
 import { UserRole } from "@prisma/client";
-import { loginRequiredMsg } from "~/lib/misc";
 import parser from "~/lib/commands/index.server";
+import { lineOfLength, loginRequiredMsg } from "~/lib/misc";
 import { getAuthenticatedUser } from "~/lib/auth/auth.user.server";
 
 export default async function CMDLsHandler({
@@ -56,7 +56,15 @@ export default async function CMDLsHandler({
 
   const targets: string[] = Array.from(
     new Set(
-      parsedLsData.data.files.map((target: string): string => join(pwd, target))
+      parsedLsData.data.files.map((target: string): string => {
+        target = join(target);
+        target = isAbsolute(target)
+          ? target
+          : [".", "./"].includes(target)
+          ? pwd
+          : join(pwd, target);
+        return target;
+      })
     )
   );
 
@@ -111,14 +119,14 @@ export default async function CMDLsHandler({
       }
       const subDirectories: Folder[] = targetWorkingDirectory.dir.Folders;
 
-      return `${targetWorkingDirectory.name}:
-${subDirectories.map(
-  (subDirectories: Folder): string =>
-    `${join(
-      targetWorkingDirectory.name,
-      subDirectories.name
-    )}  ${subDirectories.updatedAt.toDateString()}`
-)}`;
+      return `  ${targetWorkingDirectory.name}:
+${lineOfLength(targetWorkingDirectory.name.length + 5)}
+${subDirectories
+  .map(
+    (subDirectories: Folder): string =>
+      `${subDirectories.name}  ${subDirectories.updatedAt.toDateString()}`
+  )
+  .join("\n")}`;
     }
   );
 
@@ -150,7 +158,6 @@ const lsDataParser: ({ cmd }: LsDataParserArgs) => LsCMDData = ({
     },
   });
   const files: string[] = [...lsArgs.files, ...lsArgs._?.slice(1)];
-  console.log({ files });
   const lsData: LsCMDData = {
     files: files.length ? files : ["./"],
   };

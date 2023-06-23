@@ -1,4 +1,18 @@
 {
-    "UPDATE": [],
-    "MISC": false
+    "CREATE": [
+        "mkdir command",
+        "cd command",
+        "blank space after outputs"
+    ],
+    "ADD": [
+        "Input ScrollIntoView",
+        "Input caret focus"
+    ],
+    "UPDATE": [
+        "flags for ls"
+    ],
+    "FIX": [
+        "bugs with ls files parsing"
+    ],
+    "MISC": true
 }

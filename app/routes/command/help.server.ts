@@ -18,7 +18,9 @@ whoami                          []
 login                           username[u] password[p]
 signup                          username[u] email[e] password[p]
 logout*                         []
-ls*                             files[f]`,
+ls*                             files[f]?
+mkdir*                          directories[d]
+cd*                             file?`,
       },
     },
   ];

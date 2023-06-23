@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+
 import Prompt from "../prompt";
 
 type OutputProps =
@@ -7,6 +8,7 @@ type OutputProps =
       cmd: string;
       children: ReactNode;
       noPrompt?: false;
+      pwd: string;
     }
   | {
       children: ReactNode;
@@ -20,7 +22,7 @@ function Output({ children, ...outputProps }: OutputProps): JSX.Element {
         {!outputProps.noPrompt && (
           <div
             className={`flex w-full flex-wrap break-all whitespace-pre-wrap`}>
-            <Prompt name={outputProps.name} />
+            <Prompt path={outputProps.pwd} name={outputProps.name} />
             {outputProps.cmd
               .split("")
               .map((char: string, idx: number): ReactNode => {

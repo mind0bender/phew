@@ -5,10 +5,12 @@ import type { ActionReturnType } from "~/utils/actionhelper";
 
 import { z } from "zod";
 import { json } from "@remix-run/node";
+import CMDCdHandler from "./cd.server";
 import CMDLsHandler from "./ls.server";
 import CMDHelpHandler from "./help.server";
 import CMDLoginHandler from "./login.server";
 import CMDClearHandler from "./clear.server";
+import CMDMkdirHandler from "./mkdir.server";
 import CMDWhoAmIHandler from "./whoami.server";
 import CMDSignupHandler from "./signup.server";
 import CMDLogoutHandler from "./logout.server";
@@ -59,6 +61,14 @@ export async function action({ request }: ActionArgs) {
         return json<CMDResponse>(
           ...(await CMDLsHandler({ request: reqForAuth, pwd: pwd, cmd }))
         );
+      case "mkdir":
+        return json<CMDResponse>(
+          ...(await CMDMkdirHandler({ request: reqForAuth, pwd: pwd, cmd }))
+        );
+      case "cd":
+        return json<CMDResponse>(
+          ...(await CMDCdHandler({ request: reqForAuth, pwd: pwd, cmd }))
+        );
       default:
         return json<CMDResponse>(...CMDNotFoundHandler(args));
     }
@@ -91,4 +101,5 @@ export interface ParseCMDReturnType {
   data?: any;
   fetchForm?: string | true;
   updateUser?: boolean;
+  pwd?: string;
 }

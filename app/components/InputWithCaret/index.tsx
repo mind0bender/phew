@@ -6,7 +6,7 @@ import type {
   MutableRefObject,
   ReactNode,
 } from "react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface InputWithCaretProps
   extends DetailedHTMLProps<
@@ -41,6 +41,8 @@ function InputWithCaret({
     isSelected: false,
   });
 
+  const [isFocused, setIsFocused] = useState<boolean>(false);
+
   const onValueChange: ChangeEventHandler<HTMLInputElement> = (
     e: ChangeEvent<HTMLInputElement>
   ): void => {
@@ -57,13 +59,28 @@ function InputWithCaret({
     });
   }
 
+  useEffect((): (() => void) => {
+    inpRef.current?.focus();
+    setIsFocused(document.hasFocus());
+    const focusChangeHander: () => void = (): void => {
+      setIsFocused(document.hasFocus());
+    };
+    window.addEventListener("blur", focusChangeHander);
+    window.addEventListener("focus", focusChangeHander);
+
+    return (): void => {
+      window.removeEventListener("blur", focusChangeHander);
+      window.removeEventListener("focus", focusChangeHander);
+    };
+  }, []);
+
   return (
-    <div className={`flex w-full`}>
+    <div className={`flex w-full relative`}>
       <input
         onChange={onValueChange}
         value={value}
         ref={inpRef}
-        className={`scale-0 absolute`}
+        className={`scale-0 absolute -bottom-2`}
         onKeyUp={updateCaret}
         {...props}
       />
@@ -78,17 +95,24 @@ function InputWithCaret({
                 return <span key={idx}>{char}</span>;
               })}
             {/* this is the "caret" */}
-            <span
-              className={`border blink ${
-                selection.isSelected
-                  ? "rounded-sm bg-primary-400"
-                  : "bg-secondary-100"
-              } text-secondary-950`}>
-              {value.slice(
-                selection.start,
-                selection.isSelected ? selection.end : selection.start + 1
-              ) || " "}
-            </span>
+            <div>
+              <span
+                className={`ring-1 ring-secondary-100 ${
+                  selection.isSelected ? "bg-primary-400" : "bg-secondary-100"
+                } text-secondary-950`}>
+                {value.slice(
+                  selection.start,
+                  selection.isSelected ? selection.end : selection.start + 1
+                ) || (
+                  <span
+                    className={`${
+                      isFocused
+                        ? "bg-secondary-100 text-secondary-950"
+                        : "bg-secondary-950 text-secondary-100"
+                    }`}>{` `}</span>
+                )}
+              </span>
+            </div>
             {value
               .slice(selection.isSelected ? selection.end : selection.start + 1)
               .split("")

@@ -98,9 +98,13 @@ export default function Home(): JSX.Element {
                           cmd: cmd.cmd,
                           data,
                           user,
+                          pwd,
                           noPrompt: data.fetchForm === true,
                         })
                       );
+                    }
+                    if (data.pwd) {
+                      setPwd(data.pwd);
                     }
                     if (data.fetchForm && data.fetchForm !== true) {
                       setIsProcessing(true);
@@ -219,7 +223,7 @@ export default function Home(): JSX.Element {
 
   return (
     <div className={`flex flex-col grow px-2 py-1 md:px-4 md:py-3 w-full`}>
-      <label className={`flex flex-col grow w-full`} htmlFor={`cmd`}>
+      <label className={`flex gap-2 flex-col grow w-full`} htmlFor={`cmd`}>
         {outputs.map((output: ReactNode, idx: number): ReactNode => {
           return output;
         })}
@@ -240,11 +244,12 @@ export default function Home(): JSX.Element {
             autoComplete={"false"}
             autoCorrect={"false"}
             onKeyDown={handleKeydown}
-            propmtElement={<Prompt name={user.name} />}
+            propmtElement={<Prompt path={pwd} name={user.name} />}
           />
         ) : (
           <Processing />
         )}
+        <div className={`w-full h-[calc(100vh-3.5rem)] sm:mt-2`} />
       </label>
     </div>
   );
