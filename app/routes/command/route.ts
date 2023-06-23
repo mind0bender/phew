@@ -5,17 +5,17 @@ import type { ActionReturnType } from "~/utils/actionhelper";
 
 import { z } from "zod";
 import { json } from "@remix-run/node";
-import CMDCdHandler from "./cd.server";
-import CMDLsHandler from "./ls.server";
-import CMDHelpHandler from "./help.server";
-import CMDLoginHandler from "./login.server";
-import CMDClearHandler from "./clear.server";
-import CMDMkdirHandler from "./mkdir.server";
-import CMDWhoAmIHandler from "./whoami.server";
-import CMDSignupHandler from "./signup.server";
-import CMDLogoutHandler from "./logout.server";
+import CMDLsHandler from "~/routes/command/ls.server";
+import CMDCdHandler from "~/routes/command/cd.server";
+import CMDHelpHandler from "~/routes/command/help.server";
+import CMDMkdirHandler from "~/routes/command/mkdir.server";
+import CMDClearHandler from "~/routes/command/clear.server";
+import CMDLoginHandler from "~/routes/command/login.server";
+import CMDWhoAmIHandler from "~/routes/command/whoami.server";
+import CMDSignupHandler from "~/routes/command/signup.server";
+import CMDLogoutHandler from "~/routes/command/logout.server";
 import parser from "~/lib/commands/index.server";
-import CMDNotFoundHandler from "./notfound.server";
+import CMDNotFoundHandler from "~/routes/command/notfound.server";
 
 export type CMDResponse = ActionReturnType<ParseCMDReturnType>;
 export type ResWithInit = [CMDResponse, ResponseInit?];
