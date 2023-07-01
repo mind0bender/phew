@@ -35,12 +35,13 @@ model Phew {
   content          String
   password         String
   salt             String
-  // relational
+  private          Boolean  @default(true)
+  // relations
   user_id          String   @db.ObjectId
   user             User     @relation(fields: [user_id], references: [user_id])
   parent_folder_id String   @db.ObjectId
   parent           Folder   @relation(fields: [parent_folder_id], references: [folder_id])
-  // 
+  // timestamps
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 }
@@ -49,14 +50,15 @@ model Folder {
   folder_id        String   @id @default(auto()) @map("_id") @db.ObjectId
   name             String
   readonly         Boolean  @default(false)
-  // relational
+  private          Boolean  @default(true)
+  // relations
   user_id          String   @db.ObjectId
   user             User     @relation(fields: [user_id], references: [user_id])
   phews            Phew[]
   Folders          Folder[] @relation(name: "parent")
   parent           Folder?  @relation(name: "parent", fields: [parent_folder_id], references: [folder_id], onDelete: NoAction, onUpdate: NoAction)
   parent_folder_id String?  @db.ObjectId
-  // 
+  // timestamps
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 }

@@ -1,7 +1,7 @@
 import type { CMDResponse, ParseCMDReturnType } from "~/routes/command/route";
 
-export function lineOfLength(line: number, symbol: string = "-"): string {
-  return Array(line + 1).join(symbol);
+export function lineOfLength(line: number, char: string = "-"): string {
+  return Array(line + 1).join(char);
 }
 
 export const loginRequiredMsg: string = `Unauthorized user identification.
@@ -19,4 +19,16 @@ export function ERR500(data?: Partial<ParseCMDReturnType>): CMDResponse {
       },
     ],
   };
+}
+
+export interface PermissionsArgs {
+  readonly: boolean;
+  isPrivate: boolean;
+}
+
+export function getFolderPermissions({
+  readonly,
+  isPrivate, // cannot use variable `private` because of strict mode X0;
+}: PermissionsArgs): string {
+  return `r${readonly ? "-" : "w"}-${isPrivate ? "-" : "r"}-`;
 }

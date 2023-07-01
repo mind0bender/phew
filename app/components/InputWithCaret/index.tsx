@@ -61,10 +61,11 @@ function InputWithCaret({
 
   useEffect((): (() => void) => {
     inpRef.current?.focus();
-    setIsFocused(document.hasFocus());
     const focusChangeHander: () => void = (): void => {
+      inpRef.current?.focus();
       setIsFocused(document.hasFocus());
     };
+    focusChangeHander(); // for initial focus state
     window.addEventListener("blur", focusChangeHander);
     window.addEventListener("focus", focusChangeHander);
 
@@ -80,7 +81,7 @@ function InputWithCaret({
         onChange={onValueChange}
         value={value}
         ref={inpRef}
-        className={`scale-0 absolute -bottom-2`}
+        className={`scale-0 opacity-0 absolute -bottom-2`}
         onKeyUp={updateCaret}
         {...props}
       />

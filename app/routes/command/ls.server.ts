@@ -5,11 +5,15 @@ import type { SafeParseReturnType } from "zod";
 import type { ShareableUser } from "~/lib/auth/shareable.user";
 
 import { z } from "zod";
+import path from "path";
 import { db } from "~/utils/db.server";
-import { join, isAbsolute } from "path";
 import { UserRole } from "@prisma/client";
 import parser from "~/lib/commands/index.server";
-import { lineOfLength, loginRequiredMsg } from "~/lib/misc";
+import {
+  getFolderPermissions,
+  lineOfLength,
+  loginRequiredMsg,
+} from "~/lib/misc";
 import { getAuthenticatedUser } from "~/lib/auth/auth.user.server";
 
 export default async function CMDLsHandler({
@@ -57,13 +61,7 @@ export default async function CMDLsHandler({
   const targets: string[] = Array.from(
     new Set(
       parsedLsData.data.files.map((target: string): string => {
-        target = join(target);
-        target = isAbsolute(target)
-          ? target
-          : [".", "./"].includes(target)
-          ? pwd
-          : join(pwd, target);
-        return target;
+        return path.resolve("/", pwd, target);
       })
     )
   );
@@ -117,15 +115,39 @@ export default async function CMDLsHandler({
       if (!targetWorkingDirectory.dir) {
         return `[404] cannot access '${targetWorkingDirectory.name}': No such file or directory`;
       }
-      const subDirectories: Folder[] = targetWorkingDirectory.dir.Folders;
+      const subDirectories: Folder[] = targetWorkingDirectory.dir.Folders.sort(
+        (prevSubDir: Folder, currSubDir: Folder): number =>
+          prevSubDir.createdAt.getTime() - currSubDir.createdAt.getTime()
+      );
 
-      return `  ${targetWorkingDirectory.name}:
+      const longestSubDirName: string = subDirectories.reduce(
+        (prevLongestSubDirName: string, currSubDir: Folder): string => {
+          if (currSubDir.name.length > prevLongestSubDirName.length) {
+            return currSubDir.name;
+          } else {
+            return prevLongestSubDirName;
+          }
+        },
+        ""
+      );
+
+      return `  ${targetWorkingDirectory.name}:      total: ${
+        subDirectories.length
+      }
 ${lineOfLength(targetWorkingDirectory.name.length + 5)}
 ${subDirectories
-  .map(
-    (subDirectories: Folder): string =>
-      `${subDirectories.name}  ${subDirectories.updatedAt.toDateString()}`
-  )
+  .map((subDirectory: Folder): string => {
+    const baseName: string = path.basename(subDirectory.name);
+    console.log(targetWorkingDirectory);
+    const permissions: string = getFolderPermissions({
+      readonly: subDirectory.readonly,
+      isPrivate: subDirectory.private,
+    });
+    return `${baseName} ${lineOfLength(
+      longestSubDirName.length - subDirectory.name.length + 2,
+      " "
+    )} ${permissions}    ${subDirectory.updatedAt.toDateString()}`;
+  })
   .join("\n")}`;
     }
   );

@@ -1,14 +1,14 @@
 // / <reference types="w3c-web-usb" />
 // / <reference types="w3c-web-serial" />
 import type { CMDResponse } from "../command/route";
-import type { ReactNode, KeyboardEvent } from "react";
 import type { V2_MetaDescriptor } from "@remix-run/node";
 import type { ShareableUser } from "~/lib/auth/shareable.user";
 import type { LoaderArgs, V2_MetaFunction } from "@remix-run/node";
+import type { ReactNode, KeyboardEvent, MutableRefObject } from "react";
 
-import { useEffect } from "react";
 import { json } from "@remix-run/node";
 import Prompt from "~/components/prompt";
+import { useEffect, useRef } from "react";
 import { useCallback, useState } from "react";
 import { DEFAULT_USER } from "~/lib/constants";
 import clearHandler from "~/lib/commands/clear";
@@ -184,8 +184,8 @@ export default function Home(): JSX.Element {
   const handleKeydown: (e: KeyboardEvent<HTMLInputElement>) => void =
     useCallback(
       (e: KeyboardEvent<HTMLInputElement>): void => {
-        switch (e.key) {
-          case "Enter":
+        switch (e.key.toLowerCase()) {
+          case "Enter".toLowerCase():
             fetchHandler({})
               .then((resData: CMDResponse): void => {
                 if (resData.success) {
@@ -204,13 +204,22 @@ export default function Home(): JSX.Element {
                 pushCMDInHistory();
               });
             break;
-          case "ArrowUp":
+          case "Tab".toLowerCase():
+            e.preventDefault();
+            break;
+          case "ArrowUp".toLowerCase():
             e.preventDefault();
             handleCMDHistoryNavigation(e.key);
             break;
-          case "ArrowDown":
+          case "ArrowDown".toLowerCase():
             e.preventDefault();
             handleCMDHistoryNavigation(e.key);
+            break;
+          case "l":
+            if (e.ctrlKey) {
+              e.preventDefault();
+              setOutput(clearHandler({}));
+            }
             break;
           default:
             break;
@@ -219,7 +228,18 @@ export default function Home(): JSX.Element {
       [fetchHandler, handleCMDHistoryNavigation, userFetcher, pushCMDInHistory]
     );
 
+  const belowInput: MutableRefObject<HTMLDivElement | null> =
+    useRef<HTMLDivElement | null>(null);
   const [outputs, setOutput] = useState<ReactNode[]>([]);
+  useEffect((): (() => void) => {
+    belowInput.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "end",
+      inline: "end",
+    });
+
+    return (): void => {};
+  }, [outputs, isProcessing]);
 
   return (
     <div className={`flex flex-col grow px-2 py-1 md:px-4 md:py-3 w-full`}>
@@ -241,15 +261,20 @@ export default function Home(): JSX.Element {
             id="cmd"
             autoFocus
             autoCapitalize={"none"}
-            autoComplete={"false"}
-            autoCorrect={"false"}
+            autoComplete={"off"}
+            autoCorrect={"off"}
             onKeyDown={handleKeydown}
             propmtElement={<Prompt path={pwd} name={user.name} />}
           />
         ) : (
           <Processing />
         )}
-        <div className={`w-full h-[calc(100vh-3.5rem)] sm:mt-2`} />
+        <div className={`w-full h-[calc(100vh-3.5rem)] sm:mt-2`}>
+          <div ref={belowInput} />
+          {/* {JSON.stringify(CMDsHistory)}
+          <br />
+          {JSON.stringify(cmd)} */}
+        </div>
       </label>
     </div>
   );

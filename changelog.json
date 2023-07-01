@@ -1,15 +1,12 @@
 {
-    "CREATE": [
-        "mkdir command",
-        "cd command",
-        "blank space after outputs"
-    ],
     "ADD": [
         "Input ScrollIntoView",
-        "Input caret focus"
+        "private folders and phews",
+        "ls shows permissions for the content",
+        "Ctrl+L clears"
     ],
     "UPDATE": [
-        "flags for ls"
+        "replace path.join with path.resolve"
     ],
     "FIX": [
         "bugs with ls files parsing"

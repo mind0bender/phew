@@ -5,7 +5,7 @@ import type { SafeParseReturnType } from "zod";
 import type { ShareableUser } from "~/lib/auth/shareable.user";
 
 import { z } from "zod";
-import { join, isAbsolute } from "path";
+import path from "path";
 import { db } from "~/utils/db.server";
 import { UserRole } from "@prisma/client";
 import { loginRequiredMsg } from "~/lib/misc";
@@ -54,12 +54,7 @@ export default async function CMDCdHandler({
     ];
   }
 
-  let target: string = join(parsedCdData.data.directory);
-  target = isAbsolute(target)
-    ? target
-    : [".", "./"].includes(target)
-    ? pwd
-    : join(pwd, target);
+  let target: string = path.resolve("/", pwd, parsedCdData.data.directory);
 
   const changedDirectory:
     | (Folder & {

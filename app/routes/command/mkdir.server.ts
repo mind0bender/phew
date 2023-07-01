@@ -4,8 +4,8 @@ import type { Arguments } from "yargs-parser";
 import type { SafeParseReturnType } from "zod";
 import type { ShareableUser } from "~/lib/auth/shareable.user";
 
+import path from "path";
 import { z } from "zod";
-import { join, isAbsolute } from "path";
 import { db } from "~/utils/db.server";
 import { UserRole } from "@prisma/client";
 import { loginRequiredMsg } from "~/lib/misc";
@@ -46,10 +46,13 @@ export default async function CMDMkdirHandler({
         success: false,
         errors: [
           {
-            message: "Invalid Input",
+            message: parsedMkdirData.error.errors[0].message,
             code: 400,
           },
         ],
+      },
+      {
+        status: 400,
       },
     ];
   }
@@ -57,13 +60,7 @@ export default async function CMDMkdirHandler({
   const dirsToMake: string[] = Array.from(
     new Set(
       parsedMkdirData.data.directories.map((target: string): string => {
-        target = join(target);
-        target = isAbsolute(target)
-          ? target
-          : [".", "./"].includes(target)
-          ? pwd
-          : join(pwd, target);
-        return target;
+        return path.resolve("/", pwd, target);
       })
     )
   );
@@ -87,8 +84,7 @@ export default async function CMDMkdirHandler({
           | null;
         name: string;
       }> => {
-        let parentName: string = join(target, "../");
-        parentName = parentName === "/" ? parentName : parentName.slice(0, -1);
+        let parentName: string = path.resolve(target, "../");
         const parentWorkingDirectory:
           | (Folder & {
               Folders: Folder[];
@@ -190,7 +186,14 @@ const mkdirDataParser: ({ cmd }: MkdirDataParserArgs) => mkdirCMDData = ({
 };
 
 const mkdirSchema = z.object({
-  directories: z.array(z.string().min(1)).min(1),
+  directories: z
+    .array(
+      z
+        .string()
+        .min(1, "directory must be at least 1 characters")
+        .max(16, "directory must be at most 16 characters")
+    )
+    .min(1, "missing operand"),
 });
 
 type mkdirCMDData = z.infer<typeof mkdirSchema>;
