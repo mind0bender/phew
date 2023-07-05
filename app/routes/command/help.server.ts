@@ -10,7 +10,6 @@ export default function CMDHelpHandler(): ResWithInit {
 These commands are available.
 
 A star (*) next to the name means that the command is only available for authenticated users.
-A question mark (?) next to the argument name means that the argument is optional
 
 help                            []
 clear                           []
@@ -18,9 +17,10 @@ whoami                          []
 login                           username[u] password[p]
 signup                          username[u] email[e] password[p]
 logout*                         []
-ls*                             files[f]?
+ls*                             [files[f]]
 mkdir*                          directories[d]
-cd*                             file?`,
+cd*                             [file]
+touch*                          file`,
       },
     },
   ];

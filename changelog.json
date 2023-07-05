@@ -1,15 +1,18 @@
 {
+    "CREATE": [
+        "touch cmd",
+        "recursively update parent Folders",
+        "fixedDigit"
+    ],
     "ADD": [
-        "Input ScrollIntoView",
-        "private folders and phews",
-        "ls shows permissions for the content",
-        "Ctrl+L clears"
+        "ls total fixedDigit:2",
+        "trycatch in every async function w/ or w/o ERR500"
     ],
     "UPDATE": [
-        "replace path.join with path.resolve"
+        "replace `.then` with `await`"
     ],
-    "FIX": [
-        "bugs with ls files parsing"
+    "TODO": [
+        "editorState"
     ],
     "MISC": true
 }

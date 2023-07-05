@@ -32,7 +32,7 @@ model Phew {
   phew_id          String   @id @default(auto()) @map("_id") @db.ObjectId
   name             String
   readonly         Boolean  @default(false)
-  content          String
+  content          String?  @default("")
   password         String
   salt             String
   private          Boolean  @default(true)

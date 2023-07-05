@@ -23,11 +23,21 @@ export const sessionStorage: SessionStorage = createCookieSessionStorage({
 export async function getSession(
   request: Request
 ): Promise<Session<SessionData, SessionData>> {
-  return await sessionStorage.getSession(
-    request.headers.get(sessionCookieName)
-  );
+  try {
+    return await sessionStorage.getSession(
+      request.headers.get(sessionCookieName)
+    );
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
 }
 
 export async function commitSession(session: Session): Promise<string> {
-  return await sessionStorage.commitSession(session);
+  try {
+    return await sessionStorage.commitSession(session);
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
 }

@@ -1,5 +1,5 @@
-import { pbkdf2, randomBytes } from "crypto";
 import invariant from "tiny-invariant";
+import { pbkdf2, randomBytes } from "crypto";
 
 export interface HashedPassword {
   hash: string;
@@ -50,7 +50,12 @@ export default class Password {
     );
   }
   async compare(hashFromDB: string): Promise<boolean> {
-    const { hash } = await this.hash();
-    return hash === hashFromDB;
+    try {
+      const { hash } = await this.hash();
+      return hash === hashFromDB;
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
   }
 }

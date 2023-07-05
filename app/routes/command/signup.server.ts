@@ -5,6 +5,7 @@ import type { SafeParseReturnType, ZodIssue } from "zod";
 import type { ShareableUser } from "~/lib/auth/shareable.user";
 import type { UserSignupForm } from "~/lib/auth/validation.auth.user.server";
 
+import { ERR500 } from "~/lib/misc";
 import { UserRole } from "@prisma/client";
 import parser from "~/lib/commands/index.server";
 import { getAuthenticatedUser } from "~/lib/auth/auth.user.server";
@@ -17,53 +18,62 @@ export default async function CMDSignupHandler({
   request: Request;
   cmd: string;
 }): Promise<ResWithInit> {
-  const reqForAuth: Request = request.clone();
-  const user: ShareableUser = await getAuthenticatedUser({
-    request: reqForAuth,
-  });
-  if (user.role !== UserRole.STEM) {
-    return [
-      {
-        success: true,
-        data: {
-          content: `currently logged in as ${user.name}
+  try {
+    const reqForAuth: Request = request.clone();
+    const user: ShareableUser = await getAuthenticatedUser({
+      request: reqForAuth,
+    });
+    if (user.role !== UserRole.STEM) {
+      return [
+        {
+          success: true,
+          data: {
+            content: `currently logged in as ${user.name}
 logout to continue`,
+          },
         },
-      },
-    ];
-  }
+      ];
+    }
 
-  const signupData: UserSignupForm = signupDataParser(cmd);
-  const parsedSignupData: SafeParseReturnType<UserSignupForm, UserSignupForm> =
-    userSignupSchema.safeParse(signupData);
-  if (parsedSignupData.success) {
-    return [
-      {
-        success: true,
-        data: {
-          data: signupData,
-          fetchForm: "/signup",
-          content: `signing up`,
+    const signupData: UserSignupForm = signupDataParser(cmd);
+    const parsedSignupData: SafeParseReturnType<
+      UserSignupForm,
+      UserSignupForm
+    > = userSignupSchema.safeParse(signupData);
+    if (parsedSignupData.success) {
+      return [
+        {
+          success: true,
+          data: {
+            data: signupData,
+            fetchForm: "/signup",
+            content: `signing up`,
+          },
         },
-      },
-    ];
-  } else {
-    return [
-      {
-        success: false,
-        errors: [
-          ...parsedSignupData.error.errors.map((err: ZodIssue): ActionError => {
-            return {
-              message: err.message,
-              code: 400,
-            };
-          }),
-        ],
-      },
-      {
-        status: 400,
-      },
-    ];
+      ];
+    } else {
+      return [
+        {
+          success: false,
+          errors: [
+            ...parsedSignupData.error.errors.map(
+              (err: ZodIssue): ActionError => {
+                return {
+                  message: err.message,
+                  code: 400,
+                };
+              }
+            ),
+          ],
+        },
+        {
+          status: 400,
+        },
+      ];
+    }
+  } catch (error) {
+    console.error(error);
+    return ERR500();
   }
 }
 

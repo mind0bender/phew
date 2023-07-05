@@ -1,11 +1,12 @@
 // / <reference types="w3c-web-usb" />
 // / <reference types="w3c-web-serial" />
-import type { CMDResponse } from "../command/route";
 import type { V2_MetaDescriptor } from "@remix-run/node";
 import type { ShareableUser } from "~/lib/auth/shareable.user";
+import type { CMDResponse, EditorData } from "../command/route";
 import type { LoaderArgs, V2_MetaFunction } from "@remix-run/node";
 import type { ReactNode, KeyboardEvent, MutableRefObject } from "react";
 
+import { ERR500 } from "~/lib/misc";
 import { json } from "@remix-run/node";
 import Prompt from "~/components/prompt";
 import { useEffect, useRef } from "react";
@@ -29,9 +30,14 @@ export const meta: V2_MetaFunction = ({
 };
 
 export async function loader({ request }: LoaderArgs) {
-  let user: ShareableUser =
-    (await getAuthenticatedUser({ request })) || DEFAULT_USER;
-  return json({ user });
+  try {
+    let user: ShareableUser =
+      (await getAuthenticatedUser({ request })) || DEFAULT_USER;
+    return json({ user });
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
 }
 
 interface CMD {
@@ -46,6 +52,8 @@ export default function Home(): JSX.Element {
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
 
   const userFetcher = useFetcher<{ user: ShareableUser }>();
+
+  const [editorState, setEditorState] = useState<EditorData>();
 
   useEffect((): void => {
     if (userFetcher.state === "idle" && userFetcher.data == null) {
@@ -65,7 +73,7 @@ export default function Home(): JSX.Element {
     url?: string | undefined;
     opts?: RequestInit | undefined;
   }) => Promise<CMDResponse> = useCallback(
-    ({
+    async ({
       url = "/command",
       opts = {
         method: "POST",
@@ -78,68 +86,60 @@ export default function Home(): JSX.Element {
       url?: string;
       opts?: RequestInit;
     }): Promise<CMDResponse> => {
-      return new Promise(
-        (
-          resolve: (value: CMDResponse) => void,
-          reject: (reason?: any) => void
-        ): void => {
-          fetch(url, opts)
-            .then((res: Response): void => {
-              res
-                .json()
-                .then((resData: CMDResponse): void => {
-                  if (resData.success) {
-                    const { data } = resData;
-                    if (data.clear) {
-                      setOutput(clearHandler(data));
-                    } else if (data.content !== undefined) {
-                      setOutput(
-                        contentHandler({
-                          cmd: cmd.cmd,
-                          data,
-                          user,
-                          pwd,
-                          noPrompt: data.fetchForm === true,
-                        })
-                      );
-                    }
-                    if (data.pwd) {
-                      setPwd(data.pwd);
-                    }
-                    if (data.fetchForm && data.fetchForm !== true) {
-                      setIsProcessing(true);
-                      fetchHandler({
-                        url: data.fetchForm,
-                        opts: {
-                          method: "POST",
-                          body: new URLSearchParams(data.data),
-                        },
-                      })
-                        .then(resolve)
-                        .catch(reject);
-                    } else {
-                      resolve(resData);
-                    }
-                  } else {
-                    const { errors, data } = resData;
-                    setOutput(
-                      resErrorHandler({
-                        cmd: cmd.cmd,
-                        errors,
-                        user,
-                        status: res.status,
-                        noPrompt: data && data.fetchForm === true,
-                      })
-                    );
-                    setIsProcessing(false);
-                    reject(errors);
-                  }
-                })
-                .catch(reject);
+      try {
+        const res: Response = await fetch(url, opts);
+        const resData: CMDResponse = await res.json();
+        if (resData.success) {
+          const { data } = resData;
+          if (data.clear) {
+            setOutput(clearHandler(data));
+          }
+          setOutput(
+            contentHandler({
+              cmd: cmd.cmd,
+              data,
+              user,
+              pwd,
+              noPrompt: data.fetchForm === true,
             })
-            .catch(reject);
+          );
+
+          if (data.pwd) {
+            setPwd(data.pwd);
+          }
+          if (data.editor) {
+            setEditorState(data.editor);
+          }
+          if (data.fetchForm && data.fetchForm !== true) {
+            setIsProcessing(true);
+            return await fetchHandler({
+              url: data.fetchForm,
+              opts: {
+                method: "POST",
+                body: new URLSearchParams(data.data),
+              },
+            });
+          } else {
+            return resData;
+          }
+        } else {
+          const { errors, data } = resData;
+          setOutput(
+            resErrorHandler({
+              cmd: cmd.cmd,
+              errors,
+              user,
+              status: res.status,
+              noPrompt: data && data.fetchForm === true,
+            })
+          );
+          setIsProcessing(false);
+          throw errors;
         }
-      );
+      } catch (error) {
+        console.error(error);
+        return ERR500()[0];
+      }
     },
     [cmd.cmd, pwd, user]
   );
@@ -183,26 +183,24 @@ export default function Home(): JSX.Element {
 
   const handleKeydown: (e: KeyboardEvent<HTMLInputElement>) => void =
     useCallback(
-      (e: KeyboardEvent<HTMLInputElement>): void => {
+      async (e: KeyboardEvent<HTMLInputElement>): Promise<void> => {
         switch (e.key.toLowerCase()) {
           case "Enter".toLowerCase():
-            fetchHandler({})
-              .then((resData: CMDResponse): void => {
-                if (resData.success) {
-                  if (resData.data.fetchForm === true) {
-                    setIsProcessing(false);
-                  }
-                  if (resData.success && resData.data.updateUser) {
-                    userFetcher.load("/login");
-                  }
+            try {
+              const resData: CMDResponse = await fetchHandler({});
+              if (resData.success) {
+                if (resData.data.fetchForm === true) {
+                  setIsProcessing(false);
                 }
-              })
-              .catch((err: unknown): void => {
-                console.error(err);
-              })
-              .finally((): void => {
-                pushCMDInHistory();
-              });
+                if (resData.success && resData.data.updateUser) {
+                  userFetcher.load("/login");
+                }
+              }
+            } catch (err) {
+              console.error(err);
+            } finally {
+              pushCMDInHistory();
+            }
             break;
           case "Tab".toLowerCase():
             e.preventDefault();
@@ -218,7 +216,11 @@ export default function Home(): JSX.Element {
           case "l":
             if (e.ctrlKey) {
               e.preventDefault();
-              setOutput(clearHandler({}));
+              setOutput(
+                clearHandler({
+                  content: "",
+                })
+              );
             }
             break;
           default:
@@ -270,7 +272,13 @@ export default function Home(): JSX.Element {
           <Processing />
         )}
         <div className={`w-full h-[calc(100vh-3.5rem)] sm:mt-2`}>
-          <div ref={belowInput} />
+          {editorState ? (
+            <span>
+              <textarea name="editor" cols={30} rows={10}></textarea>
+            </span>
+          ) : (
+            <div ref={belowInput} />
+          )}
           {/* {JSON.stringify(CMDsHistory)}
           <br />
           {JSON.stringify(cmd)} */}
