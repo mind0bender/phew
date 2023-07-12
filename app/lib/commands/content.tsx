@@ -1,5 +1,5 @@
 import type { ReactNode, SetStateAction } from "react";
-import type { ShareableUser } from "../auth/shareable.user";
+import type { ShareableUser } from "~/lib/auth/shareable.user";
 import type { ParseCMDReturnType } from "~/routes/command/route";
 
 import Output from "~/components/output";

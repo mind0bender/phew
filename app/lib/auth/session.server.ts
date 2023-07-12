@@ -1,13 +1,12 @@
-import type { SessionStorage } from "@remix-run/node";
-import type { Session, SessionData } from "@remix-run/node";
+import type { Session, SessionData, SessionStorage } from "@remix-run/node";
 
 import invariant from "tiny-invariant";
 import { createCookieSessionStorage } from "@remix-run/node";
 
-const AUTH_SECRET: string | undefined = process.env.AUTH_SECRET;
-const sessionCookieName: string = "_session";
+const sessionCookieName = "_session";
 
-invariant(AUTH_SECRET, "cannot find AUTH_SECRET");
+invariant(process.env.AUTH_SECRET, "cannot find AUTH_SECRET");
+export const AUTH_SECRET: string = process.env.AUTH_SECRET;
 
 export const sessionStorage: SessionStorage = createCookieSessionStorage({
   cookie: {

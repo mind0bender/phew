@@ -1,18 +1,19 @@
 {
+    "FIX": [
+        "double prompt on clear cmd",
+        "error on importing { TokenExpiredError } in /verifyme.$token"
+    ],
     "CREATE": [
-        "touch cmd",
-        "recursively update parent Folders",
-        "fixedDigit"
+        "mailer for email verification",
+        "email template for email verification",
+        "checkUserRoleAndVerification function"
     ],
     "ADD": [
-        "ls total fixedDigit:2",
-        "trycatch in every async function w/ or w/o ERR500"
+        "isVerified in User",
+        "unverifiedMsg for response"
     ],
     "UPDATE": [
-        "replace `.then` with `await`"
-    ],
-    "TODO": [
-        "editorState"
-    ],
-    "MISC": true
+        "better type declaration for __db__",
+        "secondary color from stone to slate"
+    ]
 }

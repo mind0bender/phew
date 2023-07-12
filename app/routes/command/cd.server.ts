@@ -1,16 +1,17 @@
-import type { ResWithInit } from "./route";
 import type { Folder } from "@prisma/client";
 import type { Arguments } from "yargs-parser";
 import type { SafeParseReturnType } from "zod";
+import type { ResWithInit } from "~/routes/command/route";
 import type { ShareableUser } from "~/lib/auth/shareable.user";
+import type { CheckUserRoleAndVerificationReturnType } from "~/lib/auth/unverified.user.server";
 
 import { z } from "zod";
 import path from "path";
 import { db } from "~/utils/db.server";
-import { UserRole } from "@prisma/client";
 import parser from "~/lib/commands/index.server";
-import { ERR500, loginRequiredMsg } from "~/lib/misc";
+import { ERR500 } from "~/lib/misc";
 import { getAuthenticatedUser } from "~/lib/auth/auth.user.server";
+import { checkUserRoleAndVerification } from "~/lib/auth/unverified.user.server";
 
 export default async function CMDCdHandler({
   request,
@@ -26,17 +27,12 @@ export default async function CMDCdHandler({
     const user: ShareableUser = await getAuthenticatedUser({
       request: reqForAuth,
     });
-    if (user.role === UserRole.STEM) {
-      return [
-        {
-          success: false,
-          errors: [{ message: loginRequiredMsg, code: 401 }],
-        },
-        {
-          status: 401,
-        },
-      ];
+    const userAccess: CheckUserRoleAndVerificationReturnType =
+      checkUserRoleAndVerification(user);
+    if (userAccess.denied) {
+      return userAccess.res;
     }
+
     const cdData: cdCMDData = cdDataParser({ cmd });
     const parsedCdData: SafeParseReturnType<cdCMDData, cdCMDData> =
       cdSchema.safeParse(cdData);
@@ -54,7 +50,7 @@ export default async function CMDCdHandler({
       ];
     }
 
-    let target: string = path.resolve("/", pwd, parsedCdData.data.directory);
+    const target: string = path.resolve("/", pwd, parsedCdData.data.directory);
 
     const changedDirectory:
       | (Folder & {
@@ -115,7 +111,7 @@ const cdDataParser: ({ cmd }: CdDataParserArgs) => cdCMDData = ({
     //   directory: "/",
     // },
   });
-  const directory: string = String(cdArgs._[1] || "/");
+  const directory = String(cdArgs._[1] || "/");
   const cdData: cdCMDData = {
     directory: directory,
   };

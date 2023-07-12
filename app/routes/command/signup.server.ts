@@ -1,7 +1,7 @@
-import type { ResWithInit } from "./route";
 import type { Arguments } from "yargs-parser";
 import type { ActionError } from "~/utils/actionhelper";
 import type { SafeParseReturnType, ZodIssue } from "zod";
+import type { ResWithInit } from "~/routes/command/route";
 import type { ShareableUser } from "~/lib/auth/shareable.user";
 import type { UserSignupForm } from "~/lib/auth/validation.auth.user.server";
 

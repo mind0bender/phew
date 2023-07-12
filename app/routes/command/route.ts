@@ -6,11 +6,11 @@ import type { ActionReturnType } from "~/utils/actionhelper";
 import { z } from "zod";
 import { ERR500 } from "~/lib/misc";
 import { json } from "@remix-run/node";
-import CMDTouchHandler from "./touch.server";
 import parser from "~/lib/commands/index.server";
 import CMDLsHandler from "~/routes/command/ls.server";
 import CMDCdHandler from "~/routes/command/cd.server";
 import CMDHelpHandler from "~/routes/command/help.server";
+import CMDTouchHandler from "~/routes/command/touch.server";
 import CMDMkdirHandler from "~/routes/command/mkdir.server";
 import CMDClearHandler from "~/routes/command/clear.server";
 import CMDLoginHandler from "~/routes/command/login.server";
@@ -25,7 +25,7 @@ export type ResWithInit = [CMDResponse, ResponseInit?];
 export async function action({ request }: ActionArgs) {
   try {
     const reqForAuth: Request = request.clone();
-    const data: any = await request.json();
+    const data: unknown = await request.json();
     const parsedData: SafeParseReturnType<
       CommandActionData,
       CommandActionData
@@ -117,7 +117,7 @@ export interface EditorData {
 export interface ParseCMDReturnType {
   clear?: boolean;
   content: string;
-  data?: any;
+  data?: unknown;
   fetchForm?: string | true;
   updateUser?: boolean;
   pwd?: string;

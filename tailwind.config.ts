@@ -1,5 +1,5 @@
 import type { Config } from 'tailwindcss'
-import { stone, amber, emerald } from "tailwindcss/colors"
+import { slate, amber, emerald } from "tailwindcss/colors"
 
 export default {
   content: ['./app/**/*.{js,jsx,ts,tsx}'],
@@ -7,7 +7,7 @@ export default {
     extend: {
       colors:{
         primary: emerald,
-        secondary: stone,
+        secondary: slate,
         tertiary: amber,
       },
     },

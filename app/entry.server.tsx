@@ -38,7 +38,7 @@ function handleBotRequest(
   return new Promise(
     (
       resolve: (value: Response) => void,
-      reject: (reason?: any) => void
+      reject: (reason?: unknown) => void
     ): void => {
       const { pipe, abort } = renderToPipeableStream(
         <RemixServer
@@ -85,7 +85,7 @@ function handleBrowserRequest(
   return new Promise(
     (
       resolve: (value: Response) => void,
-      reject: (reason?: any) => void
+      reject: (reason?: unknown) => void
     ): void => {
       const { pipe, abort } = renderToPipeableStream(
         <RemixServer

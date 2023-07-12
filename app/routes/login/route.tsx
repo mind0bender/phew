@@ -1,10 +1,15 @@
+import type {
+  ActionArgs,
+  LoaderArgs,
+  Session,
+  TypedResponse,
+} from "@remix-run/node";
 import type { User } from "@prisma/client";
-import type { LoaderArgs } from "@remix-run/node";
-import type { CMDResponse } from "../command/route";
 import type { SafeParseReturnType, ZodIssue } from "zod";
+import type { CMDResponse } from "~/routes/command/route";
 import type { UserSession } from "~/lib/auth/auth.user.server";
 import type { ActionError, ActionReturnType } from "~/utils/actionhelper";
-import type { ActionArgs, Session, TypedResponse } from "@remix-run/node";
+import type { ShareableUserSelectedType } from "~/lib/auth/shareable.user";
 import type { UserLoginForm } from "~/lib/auth/validation.auth.user.server";
 
 import userAuthenticator, {
@@ -16,14 +21,13 @@ import Password from "~/utils/pswd.server";
 import { DEFAULT_USER } from "~/lib/constants";
 import { commitSession, getSession } from "~/lib/auth/session.server";
 import { userLoginSchema } from "~/lib/auth/validation.auth.user.server";
-import type { ShareableUserSelectedType } from "~/lib/auth/shareable.user";
 import { ShareableUser, ShareableUserSelect } from "~/lib/auth/shareable.user";
 
 export async function loader({ request }: LoaderArgs) {
   try {
-    let user: ShareableUser =
+    const user: ShareableUser =
       (await getAuthenticatedUser({ request })) || DEFAULT_USER;
-    return json({ user });
+    return json<{ user: ShareableUser }>({ user });
   } catch (error) {
     console.error(error);
   }
@@ -124,8 +128,8 @@ Access denied.`,
         success: true,
         data: {
           content: `User identified: ${user.name}
-        Logged in at: ${Date.now()}
-        Authorization confirmed.`,
+Logged in at   : ${new Date().toLocaleString()}
+Authorization confirmed.`,
           data: { user: new ShareableUser(user) },
           fetchForm: true,
           updateUser: true,

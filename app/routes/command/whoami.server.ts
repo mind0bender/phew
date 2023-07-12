@@ -1,4 +1,4 @@
-import type { ResWithInit } from "./route";
+import type { ResWithInit } from "~/routes/command/route";
 import type { ShareableUser } from "~/lib/auth/shareable.user";
 
 import { ERR500, lineOfLength } from "~/lib/misc";
@@ -17,7 +17,8 @@ export default async function CMDWhoAmIHandler(
 ${lineOfLength(user.name.length)}
 user_id: ${user.user_id}
 email: ${user.email}
-role: ${user.role}`,
+role: ${user.role}
+verified: ${user.isVerified}`,
         },
       },
     ];

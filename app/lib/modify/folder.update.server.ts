@@ -1,14 +1,13 @@
-// TODO: make the updateFolder
-
 import type { Folder } from "@prisma/client";
+
 import { db } from "~/utils/db.server";
 
 export default async function updateParentFoldersRecursive({
   folder_id,
-}: Pick<Folder, "folder_id"> | { folder_id: null }) {
+}: Pick<Folder, "folder_id"> | { folder_id: null }): Promise<void> {
   try {
     while (folder_id) {
-      // exit on undefined as that is the case for every root(/) dir
+      // exit on null as that is the case for every root(/) dir
       const { parent_folder_id }: Pick<Folder, "parent_folder_id"> =
         await db.folder.update({
           where: {

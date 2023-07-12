@@ -1,4 +1,4 @@
-import type { ResWithInit } from "./route";
+import type { ResWithInit } from "~/routes/command/route";
 
 export default function CMDHelpHandler(): ResWithInit {
   return [
@@ -9,7 +9,7 @@ export default function CMDHelpHandler(): ResWithInit {
         content: `PHEW
 These commands are available.
 
-A star (*) next to the name means that the command is only available for authenticated users.
+A star (*) next to the name means that the command is only available for verified users.
 
 help                            []
 clear                           []

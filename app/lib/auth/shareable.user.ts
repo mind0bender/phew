@@ -2,7 +2,7 @@ import type { User, UserRole } from "@prisma/client";
 
 export type ShareableUserSelectedType = Pick<
   User,
-  "user_id" | "name" | "email" | "role" | "createdAt"
+  "user_id" | "name" | "email" | "role" | "createdAt" | "isVerified"
 >;
 
 export const ShareableUserSelect: {
@@ -13,6 +13,7 @@ export const ShareableUserSelect: {
   email: true,
   role: true,
   createdAt: true,
+  isVerified: true,
 };
 
 export class ShareableUser {
@@ -21,11 +22,13 @@ export class ShareableUser {
   public email: string;
   public createdAt: string;
   public role: UserRole;
+  public isVerified: boolean;
   constructor(user: ShareableUserSelectedType) {
     this.user_id = user.user_id;
     this.name = user.name;
     this.email = user.email;
     this.createdAt = user.createdAt.toString();
     this.role = user.role;
+    this.isVerified = user.isVerified;
   }
 }

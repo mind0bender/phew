@@ -1,6 +1,7 @@
 import type { ReactNode, SetStateAction } from "react";
-import Output from "~/components/output";
 import type { ParseCMDReturnType } from "~/routes/command/route";
+
+import Output from "~/components/output";
 
 export default function clearHandler(
   outData: ParseCMDReturnType

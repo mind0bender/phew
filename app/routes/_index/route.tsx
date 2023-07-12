@@ -1,16 +1,14 @@
 // / <reference types="w3c-web-usb" />
 // / <reference types="w3c-web-serial" />
-import type { V2_MetaDescriptor } from "@remix-run/node";
+import type { V2_MetaDescriptor } from "@remix-run/react";
 import type { ShareableUser } from "~/lib/auth/shareable.user";
-import type { CMDResponse, EditorData } from "../command/route";
 import type { LoaderArgs, V2_MetaFunction } from "@remix-run/node";
+import type { CMDResponse, EditorData } from "~/routes/command/route";
 import type { ReactNode, KeyboardEvent, MutableRefObject } from "react";
 
 import { ERR500 } from "~/lib/misc";
 import { json } from "@remix-run/node";
 import Prompt from "~/components/prompt";
-import { useEffect, useRef } from "react";
-import { useCallback, useState } from "react";
 import { DEFAULT_USER } from "~/lib/constants";
 import clearHandler from "~/lib/commands/clear";
 import Processing from "~/components/processing";
@@ -18,6 +16,7 @@ import resErrorHandler from "~/lib/commands/error";
 import contentHandler from "~/lib/commands/content";
 import InputWithCaret from "~/components/InputWithCaret";
 import { useFetcher, useLoaderData } from "@remix-run/react";
+import { useCallback, useState, useEffect, useRef } from "react";
 import { getAuthenticatedUser } from "~/lib/auth/auth.user.server";
 
 export const meta: V2_MetaFunction = ({
@@ -31,9 +30,9 @@ export const meta: V2_MetaFunction = ({
 
 export async function loader({ request }: LoaderArgs) {
   try {
-    let user: ShareableUser =
+    const user: ShareableUser =
       (await getAuthenticatedUser({ request })) || DEFAULT_USER;
-    return json({ user });
+    return json<{ user: ShareableUser }>({ user });
   } catch (error) {
     console.error(error);
     throw error;
@@ -93,16 +92,17 @@ export default function Home(): JSX.Element {
           const { data } = resData;
           if (data.clear) {
             setOutput(clearHandler(data));
+          } else {
+            setOutput(
+              contentHandler({
+                cmd: cmd.cmd,
+                data,
+                user,
+                pwd,
+                noPrompt: data.fetchForm === true,
+              })
+            );
           }
-          setOutput(
-            contentHandler({
-              cmd: cmd.cmd,
-              data,
-              user,
-              pwd,
-              noPrompt: data.fetchForm === true,
-            })
-          );
 
           if (data.pwd) {
             setPwd(data.pwd);
@@ -112,13 +112,19 @@ export default function Home(): JSX.Element {
           }
           if (data.fetchForm && data.fetchForm !== true) {
             setIsProcessing(true);
-            return await fetchHandler({
-              url: data.fetchForm,
-              opts: {
-                method: "POST",
-                body: new URLSearchParams(data.data),
-              },
-            });
+            const fetchFormData: Record<string, string> | undefined =
+              data.data as Record<string, string> | undefined;
+            if (fetchFormData && typeof fetchFormData === "object") {
+              return await fetchHandler({
+                url: data.fetchForm,
+                opts: {
+                  method: "POST",
+                  body: new URLSearchParams(fetchFormData),
+                },
+              });
+            } else {
+              throw new Error("Invalid data received");
+            }
           } else {
             return resData;
           }
@@ -131,6 +137,7 @@ export default function Home(): JSX.Element {
               user,
               status: res.status,
               noPrompt: data && data.fetchForm === true,
+              pwd,
             })
           );
           setIsProcessing(false);
@@ -233,14 +240,12 @@ export default function Home(): JSX.Element {
   const belowInput: MutableRefObject<HTMLDivElement | null> =
     useRef<HTMLDivElement | null>(null);
   const [outputs, setOutput] = useState<ReactNode[]>([]);
-  useEffect((): (() => void) => {
+  useEffect((): void => {
     belowInput.current?.scrollIntoView({
       behavior: "smooth",
       block: "end",
       inline: "end",
     });
-
-    return (): void => {};
   }, [outputs, isProcessing]);
 
   return (

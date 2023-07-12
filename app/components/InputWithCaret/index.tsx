@@ -6,6 +6,7 @@ import type {
   MutableRefObject,
   ReactNode,
 } from "react";
+
 import { useEffect, useRef, useState } from "react";
 
 interface InputWithCaretProps
@@ -51,7 +52,7 @@ function InputWithCaret({
 
   function updateCaret(): void {
     const start: number = inpRef.current?.selectionStart || 0;
-    let end: number = inpRef.current?.selectionEnd || 0;
+    const end: number = inpRef.current?.selectionEnd || 0;
     setSelection({
       start,
       end,

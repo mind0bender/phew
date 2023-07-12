@@ -1,5 +1,5 @@
-import type { ResWithInit } from "./route";
 import type { Arguments } from "yargs-parser";
+import type { ResWithInit } from "~/routes/command/route";
 
 export default function CMDNotFoundHandler(args: Arguments): ResWithInit {
   return [

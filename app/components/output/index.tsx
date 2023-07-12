@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import Prompt from "../prompt";
+import Prompt from "~/components/prompt";
 
 type OutputProps =
   | {

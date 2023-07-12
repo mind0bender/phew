@@ -9,7 +9,7 @@ export interface HashedPassword {
 export default class Password {
   private password: string;
   private salt: string | null;
-  private static iterations: number = 1000;
+  private static iterations = 1000;
 
   private static generateSalt(): string {
     const salt: string = randomBytes(16).toString("hex");

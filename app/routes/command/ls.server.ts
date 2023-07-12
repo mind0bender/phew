@@ -1,22 +1,22 @@
-import type { ResWithInit } from "./route";
 import type { Arguments } from "yargs-parser";
 import type { SafeParseReturnType } from "zod";
 import type { Folder, Phew } from "@prisma/client";
+import type { ResWithInit } from "~/routes/command/route";
 import type { ShareableUser } from "~/lib/auth/shareable.user";
+import type { CheckUserRoleAndVerificationReturnType } from "~/lib/auth/unverified.user.server";
 
-import path from "path";
-import { z } from "zod";
-import { db } from "~/utils/db.server";
-import { UserRole } from "@prisma/client";
-import parser from "~/lib/commands/index.server";
 import {
   ERR500,
   fixedDigits,
   getFolderPermissions,
   lineOfLength,
-  loginRequiredMsg,
 } from "~/lib/misc";
+import path from "path";
+import { z } from "zod";
+import { db } from "~/utils/db.server";
+import parser from "~/lib/commands/index.server";
 import { getAuthenticatedUser } from "~/lib/auth/auth.user.server";
+import { checkUserRoleAndVerification } from "~/lib/auth/unverified.user.server";
 
 type CommonInFolderAndPhew = "updatedAt" | "name" | "readonly" | "private";
 type PhewOrFolder = Pick<Phew | Folder, CommonInFolderAndPhew> & {
@@ -37,16 +37,10 @@ export default async function CMDLsHandler({
     const user: ShareableUser = await getAuthenticatedUser({
       request: reqForAuth,
     });
-    if (user.role === UserRole.STEM) {
-      return [
-        {
-          success: false,
-          errors: [{ message: loginRequiredMsg, code: 401 }],
-        },
-        {
-          status: 401,
-        },
-      ];
+    const userAccess: CheckUserRoleAndVerificationReturnType =
+      checkUserRoleAndVerification(user);
+    if (userAccess.denied) {
+      return userAccess.res;
     }
 
     const lsData: LsCMDData = lsDataParser({ cmd });
@@ -194,7 +188,7 @@ ${subDirsAndsubPhews
     return ` ${subContent.isDir ? `□` : `▪`}  ${baseName} ${lineOfLength(
       longestSubDirName.length - subContent.name.length + 2,
       " "
-    )} ${permissions}    ${subContent.updatedAt.toDateString()}`;
+    )} ${permissions}    ${subContent.updatedAt.toLocaleDateString()}`;
   })
   .join("\n")}`;
       }

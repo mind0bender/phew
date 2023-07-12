@@ -1,17 +1,18 @@
-import type { ResWithInit } from "./route";
 import type { Folder } from "@prisma/client";
 import type { Arguments } from "yargs-parser";
 import type { SafeParseReturnType } from "zod";
+import type { ResWithInit } from "~/routes/command/route";
 import type { ShareableUser } from "~/lib/auth/shareable.user";
+import type { CheckUserRoleAndVerificationReturnType } from "~/lib/auth/unverified.user.server";
 
 import path from "path";
 import { z } from "zod";
 import { db } from "~/utils/db.server";
-import { UserRole } from "@prisma/client";
 import parser from "~/lib/commands/index.server";
-import { ERR500, loginRequiredMsg } from "~/lib/misc";
+import { ERR500 } from "~/lib/misc";
 import { getAuthenticatedUser } from "~/lib/auth/auth.user.server";
-import updateParentFoldersRecursive from "~/lib/update/folder.update.server";
+import updateParentFoldersRecursive from "~/lib/modify/folder.update.server";
+import { checkUserRoleAndVerification } from "~/lib/auth/unverified.user.server";
 
 export default async function CMDMkdirHandler({
   request,
@@ -27,16 +28,10 @@ export default async function CMDMkdirHandler({
     const user: ShareableUser = await getAuthenticatedUser({
       request: reqForAuth,
     });
-    if (user.role === UserRole.STEM) {
-      return [
-        {
-          success: false,
-          errors: [{ message: loginRequiredMsg, code: 401 }],
-        },
-        {
-          status: 401,
-        },
-      ];
+    const userAccess: CheckUserRoleAndVerificationReturnType =
+      checkUserRoleAndVerification(user);
+    if (userAccess.denied) {
+      return userAccess.res;
     }
 
     const mkdirData: mkdirCMDData = mkdirDataParser({ cmd });
@@ -86,7 +81,7 @@ export default async function CMDMkdirHandler({
             | null;
           name: string;
         }> => {
-          let parentName: string = path.resolve(target, "../");
+          const parentName: string = path.resolve(target, "../");
           const parentDir:
             | (Folder & {
                 Folders: Folder[];

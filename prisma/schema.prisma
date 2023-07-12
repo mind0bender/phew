@@ -8,24 +8,25 @@ datasource db {
 }
 
 model User {
-  user_id   String   @id @default(auto()) @map("_id") @db.ObjectId
-  name      String   @unique
-  password  String
-  salt      String
-  email     String   @unique
-  role      UserRole @default(USER)
+  user_id    String   @id @default(auto()) @map("_id") @db.ObjectId
+  name       String   @unique
+  isVerified Boolean  @default(false)
+  password   String
+  salt       String
+  email      String   @unique
+  role       UserRole @default(USER)
   // relational
-  phews     Phew[]
-  folders   Folder[]
+  phews      Phew[]
+  folders    Folder[]
   // 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 enum UserRole {
   STEM
   USER
-  ROOT
+  SU
 }
 
 model Phew {
@@ -38,9 +39,9 @@ model Phew {
   private          Boolean  @default(true)
   // relations
   user_id          String   @db.ObjectId
-  user             User     @relation(fields: [user_id], references: [user_id])
+  user             User     @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
   parent_folder_id String   @db.ObjectId
-  parent           Folder   @relation(fields: [parent_folder_id], references: [folder_id])
+  parent           Folder   @relation(fields: [parent_folder_id], references: [folder_id], onDelete: Cascade)
   // timestamps
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
@@ -53,7 +54,7 @@ model Folder {
   private          Boolean  @default(true)
   // relations
   user_id          String   @db.ObjectId
-  user             User     @relation(fields: [user_id], references: [user_id])
+  user             User     @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
   phews            Phew[]
   Folders          Folder[] @relation(name: "parent")
   parent           Folder?  @relation(name: "parent", fields: [parent_folder_id], references: [folder_id], onDelete: NoAction, onUpdate: NoAction)
