@@ -1,4 +1,5 @@
 import type { Params } from "react-router";
+import type { Folder, User } from "@prisma/client";
 import type { JwtPayload } from "~/lib/auth/jwt.server";
 import type { ChangeEvent, ChangeEventHandler } from "react";
 import type { ShareableUserSelectedType } from "~/lib/auth/shareable.user";
@@ -16,6 +17,7 @@ import { redirect } from "@remix-run/node";
 import { useCallback, useState } from "react";
 import { Form, useLoaderData } from "@remix-run/react";
 import { ShareableUserSelect, ShareableUser } from "~/lib/auth/shareable.user";
+import deleteFoldersWithChildsRecursive from "~/lib/modify/folder.delete.server";
 
 interface UserNotFound {
   userFound: false;
@@ -27,7 +29,7 @@ interface UserFound {
   user: ShareableUser;
 }
 
-const validShouldVerify: string[] = ["verify"];
+const validDeletes: string[] = ["delete"];
 
 export async function loader({
   params,
@@ -87,63 +89,58 @@ export async function loader({
   }
 }
 
-export default function VerifymeWithTOkenPage(): JSX.Element {
+export default function DeletemeWithTokenPage(): JSX.Element {
   const data = useLoaderData<typeof loader>();
 
-  const [verify, setVerify] = useState<string>("");
+  const [shouldDelete, setShouldDelete] = useState<string>("");
   const changeHandler: ChangeEventHandler<HTMLInputElement> = useCallback(
     (e: ChangeEvent<HTMLInputElement>): void => {
-      setVerify(e.target.value);
+      setShouldDelete(e.target.value);
     },
     []
   );
 
   return (
-    <label htmlFor={"verify"} className={`p-2 grow`}>
+    <label htmlFor={"shouldDelete"} className={`p-2 grow`}>
       {data.userFound ? (
         <>
           <div>User identified: {data.user.name}</div>
           <div>role: {data.user.role}</div>
           <br />
-          {data.user.isVerified ? (
-            <div>This account has been verified, you can start using phew.</div>
-          ) : (
-            <div>
-              To proceed with the account verification, please confirm by
-              entering{" "}
-              <code
-                onClick={() => {
-                  setVerify(validShouldVerify[0]);
-                }}
-                className={`border-b-2 border-primary-400 px-1 py-0.5`}>
-                verify
-              </code>
-              .
-              <br />
-              To delete your account, enter any other key.
-              <br />
-              <br />
-              <Form method="POST">
-                <span>&gt; </span>
-                <input
-                  className={`bg-transparent caret-primary-400 ${
-                    validShouldVerify.includes(verify)
-                      ? "text-primary-400"
-                      : "text-secondary-400"
-                  } ring-white border-none outline-none rounded-none`}
-                  name={"verify"}
-                  id={"verify"}
-                  autoFocus
-                  autoCapitalize={"none"}
-                  autoComplete={"off"}
-                  autoCorrect={"off"}
-                  type="text"
-                  value={verify}
-                  onChange={changeHandler}
-                />
-              </Form>
-            </div>
-          )}
+          <div>
+            Are you sure you want to delete your account? You will permanently
+            lose your:
+            <ul className={`list-[square] ml-6`}>
+              <li>profile</li>
+              <li>folders</li>
+              <li>phews</li>
+            </ul>
+            <br />
+            To delete your account, type{" "}
+            <code className={`border-b-2 border-error-500 px-1 py-0.5`}>
+              delete
+            </code>
+            .
+            <br />
+            <br />
+            <Form method="POST">
+              <span>&gt; </span>
+              <input
+                className={`bg-transparent caret-error-500 ${
+                  validDeletes.includes(shouldDelete) && "text-red-500"
+                } ring-white border-none outline-none rounded-none`}
+                name={"shouldDelete"}
+                id={"shouldDelete"}
+                autoFocus
+                autoCapitalize={"none"}
+                autoComplete={"off"}
+                autoCorrect={"off"}
+                type="text"
+                value={shouldDelete}
+                onChange={changeHandler}
+              />
+            </Form>
+          </div>
         </>
       ) : (
         <div>{data.error}</div>
@@ -156,18 +153,18 @@ export async function action({ request, params }: ActionArgs) {
   const { token }: Params = params;
 
   const data: FormData = await request.formData();
-  const verify: FormDataEntryValue | null = data.get("verify");
-  const parsedVerify: z.SafeParseReturnType<string, string> = z
+  const shouldDeleteStr: FormDataEntryValue | null = data.get("shouldDelete");
+  const parsedShouldDelete: z.SafeParseReturnType<string, string> = z
     .string()
-    .safeParse(verify);
-  if (!parsedVerify.success) {
+    .safeParse(shouldDeleteStr);
+  if (!parsedShouldDelete.success) {
     return json<UserNotFound>({
       userFound: false,
       error: `Invalid input`,
     });
   }
 
-  const shouldVerify: boolean = validShouldVerify.includes(parsedVerify.data);
+  const shouldDelete: boolean = validDeletes.includes(parsedShouldDelete.data);
 
   if (!token) {
     return json<UserNotFound>({
@@ -183,13 +180,10 @@ export async function action({ request, params }: ActionArgs) {
         error: `Invalid token`,
       });
     }
-    if (shouldVerify) {
-      const user: ShareableUserSelectedType | null = await db.user.update({
+    if (shouldDelete) {
+      const user: ShareableUserSelectedType | null = await db.user.findUnique({
         where: {
           user_id,
-        },
-        data: {
-          isVerified: true,
         },
         select: ShareableUserSelect,
       });
@@ -199,13 +193,40 @@ export async function action({ request, params }: ActionArgs) {
           error: `user not found`,
         });
       } else {
-        return json<UserFound>({
-          userFound: true,
-          user: new ShareableUser(user),
+        const rootDir: Folder | null = await db.folder.findFirst({
+          where: {
+            user_id,
+            name: "/",
+          },
         });
+        if (!rootDir) {
+          return json<UserNotFound>({
+            userFound: false,
+            error: `root dir(/) not found`,
+          });
+        }
+        await deleteFoldersWithChildsRecursive({
+          folder_id: rootDir.folder_id,
+        });
+        const user: Pick<User, "name"> | null = await db.user.delete({
+          where: {
+            user_id,
+          },
+          select: {
+            name: true,
+          },
+        });
+        if (!user) {
+          return json<UserNotFound>({
+            userFound: false,
+            error: `user not found`,
+          });
+        } else {
+          return redirect("/");
+        }
       }
     } else {
-      return redirect(`/deleteme/${token}`);
+      return redirect("/");
     }
   } catch (error) {
     if (error instanceof TokenExpiredError) {

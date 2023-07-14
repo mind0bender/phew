@@ -1,19 +1,8 @@
 {
-    "FIX": [
-        "double prompt on clear cmd",
-        "error on importing { TokenExpiredError } in /verifyme.$token"
-    ],
     "CREATE": [
-        "mailer for email verification",
-        "email template for email verification",
-        "checkUserRoleAndVerification function"
-    ],
-    "ADD": [
-        "isVerified in User",
-        "unverifiedMsg for response"
+        "/deleteme/$token route"
     ],
     "UPDATE": [
-        "better type declaration for __db__",
-        "secondary color from stone to slate"
+        "/verifyme/$token now redirects the user to /deleteme/$token route on account deletion request"
     ]
 }

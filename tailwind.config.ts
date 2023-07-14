@@ -1,17 +1,17 @@
-import type { Config } from 'tailwindcss'
-import { slate, amber, emerald } from "tailwindcss/colors"
+import type { Config } from "tailwindcss";
+import { slate, amber, emerald, red } from "tailwindcss/colors";
 
 export default {
-  content: ['./app/**/*.{js,jsx,ts,tsx}'],
+  content: ["./app/**/*.{js,jsx,ts,tsx}"],
   theme: {
     extend: {
-      colors:{
+      colors: {
         primary: emerald,
         secondary: slate,
         tertiary: amber,
+        error: red,
       },
     },
   },
   plugins: [],
-} satisfies Config
-
+} satisfies Config;
