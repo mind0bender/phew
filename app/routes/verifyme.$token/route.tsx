@@ -115,7 +115,7 @@ export default function VerifymeWithTOkenPage(): JSX.Element {
                 onClick={() => {
                   setVerify(validShouldVerify[0]);
                 }}
-                className={`border-b-2 border-primary-400 px-1 py-0.5`}>
+                className={`border-b-2 border-primary-400 hover:border-tertiary-300 px-1 py-0.5 duration-150`}>
                 verify
               </code>
               .

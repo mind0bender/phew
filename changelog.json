@@ -1,8 +1,5 @@
 {
     "CREATE": [
-        "/deleteme/$token route"
-    ],
-    "UPDATE": [
-        "/verifyme/$token now redirects the user to /deleteme/$token route on account deletion request"
+        "/deleteme route to redirect authenticated user"
     ]
 }
